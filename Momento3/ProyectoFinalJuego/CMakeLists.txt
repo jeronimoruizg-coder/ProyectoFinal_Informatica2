@@ -24,10 +24,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         juego.h juego.cpp
-        entidad.h entidad.cpp
+
         dexter.h dexter.cpp
         enemigos.h enemigos.cpp
         objetos.h objetos.cpp
+        bomba.h bomba.cpp
+        semillaexplosiva.h semillaexplosiva.cpp
+        inteligencia.h inteligencia.cpp
+        mapa.h mapa.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ProyectoFinalJuego APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

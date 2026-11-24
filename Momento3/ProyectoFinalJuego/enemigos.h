@@ -1,12 +1,11 @@
 #ifndef ENEMIGOS_H
 #define ENEMIGOS_H
-#include "entidad.h"
 
-class Enemigos: public Entidad
+class Enemigos
 {
 public:
     Enemigos();
-    void moverse() override;
+    virtual void moverse();
 };
 
 #endif // ENEMIGOS_H
