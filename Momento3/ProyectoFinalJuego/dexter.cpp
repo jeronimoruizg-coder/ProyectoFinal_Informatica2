@@ -5,10 +5,16 @@ Dexter::Dexter()
     ancho = 36;
     alto = 36;
     velocidad = 3;
+    velocidadY = 0;
 
     // arranca centrado en la casilla (1, 1)
     x = 1 * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - ancho) / 2;
     y = 1 * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - alto) / 2;
+
+    //Nivel 1
+    // Inicializamos el estado de recoleccion
+    tiempoRecoleccion = 0;
+    orientacion = 1;
 }
 
 void Dexter::mover(int dirX, int dirY, Mapa &mapa)
@@ -44,6 +50,143 @@ float Dexter::getY() { return y; }
 int Dexter::getAncho() { return ancho; }
 int Dexter::getAlto() { return alto; }
 
-void Dexter::atraparObjetos() {}
-void Dexter::saltar() {}
-void Dexter::despalzarse() {}
+
+
+
+//---------------------------------//-----------------------------------//
+
+//Nivel 1
+void Dexter::iniciarNivel1() //Modificamos los atributos de dexter para el nivel 1
+{
+    ancho = 50;
+    alto = 80;
+    x = 200;
+    y = 650 - alto;
+    velocidad = 300;
+    velocidadY = 0;
+    // Inicializamos el estado de recoleccion
+    tiempoRecoleccion = 0;
+    orientacion = 1;
+}
+
+void Dexter::desplazarse(int direccion, float intervaloTiempo)
+{
+    // Actualizamos la orientacion cuando Dexter se mueve
+    if (direccion > 0)
+    {
+        orientacion = 1;
+    }
+    else if (direccion < 0)
+    {
+        orientacion = -1;
+    }
+    // Calculamos la nueva posicion horizontal
+    x = x + direccion * velocidad * intervaloTiempo; //Primer Calculo Fisico (MRU)
+
+    // Limite izquierdo del escenario
+    if (x < 0)
+    {
+        x = 0; //Mantenemos a Dexter dentro de los limites
+    }
+
+    // Limite derecho del escenario
+    if (x + ancho > 1280)
+    {
+        x = 1280 - ancho; //Mantenemos a Dexter dentro de los limites
+    }
+}
+
+void Dexter::saltar()
+{
+    // Solo puede saltar si esta sobre el suelo
+    if (y + alto >= 650)
+    {
+        velocidadY = -550;
+    }
+}
+
+void Dexter::aplicarGravedad(float intervaloTiempo)
+{
+    // Aceleracion de la gravedad
+    velocidadY = velocidadY + 1500 * intervaloTiempo; //Segunda Fisica (MRUA)
+
+    // Actualizamos la posicion vertical
+    y = y + velocidadY * intervaloTiempo;
+
+    // Detectamos el contacto con el suelo
+    if (y + alto >= 650)
+    {
+        y = 650 - alto;
+        velocidadY = 0;
+    }
+}
+
+// mecanica de recoleccion
+void Dexter::atraparObjetos()
+{
+    // Iniciamos una recoleccion solamente si
+    // no hay otra en ejecucion
+    if (tiempoRecoleccion <= 0)
+    {
+        tiempoRecoleccion = 0.4;
+    }
+}
+
+// Actualizamos la duracion de la recoleccion
+void Dexter::actualizarRecoleccion(float intervaloTiempo)
+{
+    if (tiempoRecoleccion > 0)
+    {
+        tiempoRecoleccion -= intervaloTiempo;
+
+        // Evitamos que el tiempo sea negativo
+        if (tiempoRecoleccion < 0)
+        {
+            tiempoRecoleccion = 0;
+        }
+    }
+}
+
+// Comprobamos si Dexter esta utilizando la red
+bool Dexter::estaRecolectando()
+{
+    return tiempoRecoleccion > 0;
+}
+
+// Calculamos la posicion horizontal de la zona de captura
+float Dexter::getRecoleccionX()
+{
+    // Si Dexter mira a la derecha,
+    // la zona aparece un poco delante de el,
+    // pero montandose ligeramente sobre su cuerpo
+    if (orientacion == 1)
+    {
+        return x + ancho - 15;
+    }
+
+    // Si mira a la izquierda,
+    // hacemos lo mismo pero hacia el otro lado
+    return x - getRecoleccionAncho() + 15;
+}
+
+// Calculamos la posicion vertical de la zona de captura
+float Dexter::getRecoleccionY()
+{
+
+    return y - 20;
+}
+
+// Ancho de la zona de captura
+int Dexter::getRecoleccionAncho()
+{
+
+    return 55;
+}
+
+// Alto de la zona de captura
+int Dexter::getRecoleccionAlto()
+{
+    // Tambien reducimos la altura
+    // para que no quede tan exagerada
+    return 60;
+}
