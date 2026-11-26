@@ -12,6 +12,9 @@
 #include <QDebug>
 
 VistaNivel1::VistaNivel1() {
+
+    partidaTerminada = false;
+
     //Manejo de la interaccion con teclado
     izquierdaPresionada = false;
     derechaPresionada = false;
@@ -39,6 +42,9 @@ VistaNivel1::VistaNivel1() {
     {
         cargarSprites();
         cargarSpritesMuestras();
+        cargarSpriteSemilla();
+        cargarSpritesExplosion();
+        cargarSpriteMuerte();
     }
     catch (const runtime_error &error)
     {
@@ -50,14 +56,28 @@ VistaNivel1::VistaNivel1() {
         return;
     }
 
-    // Mostramos el primer fotograma de reposo
+    // Mostramos el fotograma de reposo
     figuraDexter = escena->addPixmap(spritesReposo[0]);
     figuraDexter->setScale(2);  // Duplicamos el tamaño visual de la imagen
     figuraDexter->setOffset(-19.5, -25); // Ajustamos la imagen respecto a la posicion fisica
     figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());//Le damos una posicion inicial a Dexter
 
-    // Creamos el panel de muestras botanicas
+    // Creamos el efecto visual de daño
+    efectoDano = new QGraphicsColorizeEffect();
+    // Configuramos el color rojo
+    efectoDano->setColor(Qt::red);
+    // Intensidad del efecto
+    efectoDano->setStrength(0.8);
+    // Asociamos el efecto al sprite de Dexter
+    figuraDexter->setGraphicsEffect(efectoDano);
+    // Inicialmente permanece desactivado
+    efectoDano->setEnabled(false);
+
+    // Creamos el panel de Flores recolectadas
     crearContadorMuestras();
+
+    //Creamos el contador de vidas
+    crearContadorVidas();
 
     //Detalles de la vista grafica
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);//Desactiva el desplazamiento Horizontal
@@ -76,6 +96,11 @@ VistaNivel1::VistaNivel1() {
 // Detectamos cuando el jugador presiona una tecla
 void VistaNivel1::keyPressEvent(QKeyEvent *evento)
 {
+    if (partidaTerminada)
+    {
+        return;
+    }
+
     // Ignoramos las repeticiones automaticas del teclado
     if (evento->isAutoRepeat())
     {
@@ -114,6 +139,11 @@ void VistaNivel1::keyPressEvent(QKeyEvent *evento)
 // Detectamos cuando el jugador suelta una tecla
 void VistaNivel1::keyReleaseEvent(QKeyEvent *evento)
 {
+    if (partidaTerminada)
+    {
+        return;
+    }
+
     // Ignoramos las repeticiones automaticas del teclado
     if (evento->isAutoRepeat())
     {
@@ -146,6 +176,11 @@ void VistaNivel1::keyReleaseEvent(QKeyEvent *evento)
 //Actualiza la posicion de dexter
 void VistaNivel1::actualizarJuego()
 {
+    if (partidaTerminada)
+    {
+        return;
+    }
+
     int direccion = 0;
 
     if (izquierdaPresionada)
@@ -166,12 +201,25 @@ void VistaNivel1::actualizarJuego()
 
     figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());
     actualizarAnimacion(direccion);
+    actualizarEfectoDano();//Agrega el efecto de parpadeo cuando recibe daño Dexter
 
     // Actualizamos las muestras que aparecen en pantalla
     actualizarMuestrasGraficas();
 
+    // Actualizamos las semillas que aparecen en pantalla
+    actualizarSemillasGraficas();
+
     // Actualizamos el contador de muestras
     actualizarContadorMuestras();
+
+    // Actualizamos el contador de vidas
+    actualizarContadorVidas();
+
+    // Comprobamos si Dexter ha perdido
+    if (nivel.getDexter().getVidas() <= 0)
+    {
+        finalizarPartida();
+    }
 }
 
 // Actualizamos la animacion y orientacion de Dexter
@@ -356,10 +404,6 @@ void VistaNivel1::cargarSprites()
     // Recoleccion: cinco fotogramas
     cargarAnimacion(spritesRecoleccion,
                     ":/sprites/dexter/recoleccion", 5);
-
-    // Daño: cuatro fotogramas
-    cargarAnimacion(spritesDano,
-                    ":/sprites/dexter/dano", 4);
 }
 
 
@@ -536,4 +580,239 @@ void VistaNivel1::actualizarContadorMuestras()
     textoMuestras->setPlainText(
         "Muestras: " + QString::number(cantidad) + " / 20"
         );
+}
+
+// Cargamos la imagen de la semilla una sola vez
+void VistaNivel1::cargarSpriteSemilla()
+{
+    spriteSemilla.load(
+        ":/sprites/objetos/semilla/semilla_00.png");
+
+    if (spriteSemilla.isNull())
+    {
+        throw runtime_error(
+            "No se pudo cargar la semilla explosiva");
+    }
+
+    // Ajustamos la imagen a sus dimensiones fisicas
+    spriteSemilla = spriteSemilla.scaled(
+        40, 40,
+        Qt::IgnoreAspectRatio,
+        Qt::FastTransformation);
+}
+
+void VistaNivel1::actualizarSemillasGraficas()
+{
+    const vector<SemillaExplosiva*>& semillas =
+        nivel.getSemillas();
+
+    // Creamos las figuras necesarias
+    while (figurasSemillas.size() < semillas.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(spriteSemilla);
+
+        figurasSemillas.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasSemillas.size() > semillas.size())
+    {
+        delete figurasSemillas.back();
+
+        figurasSemillas.pop_back();
+    }
+
+    // Actualizamos las figuras existentes
+    for (int i = 0; i < semillas.size(); i++)
+    {
+        const QPixmap *imagen = &spriteSemilla;
+
+        float posicionX = semillas[i]->getX();
+        float posicionY = semillas[i]->getY();
+
+        // Si exploto, seleccionamos su fotograma
+        if (semillas[i]->haExplotado())
+        {
+            int fotograma =
+                semillas[i]->getFotogramaExplosion();
+
+            imagen = &spritesExplosion[fotograma];
+
+            // Centramos la explosion sobre la semilla
+            posicionX -= 40;
+            posicionY -= 40;
+        }
+
+        // Solo cambiamos la imagen si es diferente
+        if (figurasSemillas[i]->pixmap().cacheKey()
+            != imagen->cacheKey())
+        {
+            figurasSemillas[i]->setPixmap(*imagen);
+        }
+
+        // Actualizamos la posicion
+        figurasSemillas[i]->setPos(
+            posicionX, posicionY);
+    }
+}
+
+void VistaNivel1::cargarSpritesExplosion()
+{
+    // Cargamos los ocho fotogramas
+    cargarAnimacion(
+        spritesExplosion,
+        ":/sprites/objetos/explosion", 8);
+
+    // Ajustamos el tamaño de cada fotograma
+    for (int i = 0; i < spritesExplosion.size(); i++)
+    {
+        spritesExplosion[i] =
+            spritesExplosion[i].scaled(
+                120, 120,
+                Qt::IgnoreAspectRatio,
+                Qt::FastTransformation);
+    }
+}
+
+void VistaNivel1::actualizarEfectoDano()
+{
+    bool activar = nivel.getDexter().debeTitilarRojo();
+
+    // Solo modificamos el efecto si cambia su estado
+    if (efectoDano->isEnabled() != activar)
+    {
+        efectoDano->setEnabled(activar);
+    }
+}
+
+void VistaNivel1::crearContadorVidas()
+{
+    vidasMostradas = -1;
+
+    // Fondo del contador
+    escena->addRect(
+              20, 84, 245, 54,
+              QPen(QColor(140, 170, 112), 2),
+              QBrush(QColor(38, 59, 52))
+              )->setZValue(20);
+
+    // Texto del contador
+    textoVidas = escena->addText("");
+
+    textoVidas->setFont(
+        QFont("Consolas", 16, QFont::Bold));
+
+    textoVidas->setDefaultTextColor(
+        QColor(255, 245, 217));
+
+    textoVidas->setPos(30, 94);
+    textoVidas->setZValue(21);
+
+    actualizarContadorVidas();
+}
+
+void VistaNivel1::actualizarContadorVidas()
+{
+    int cantidad = nivel.getDexter().getVidas();
+
+    // Solo actualizamos cuando cambian las vidas
+    if (cantidad == vidasMostradas)
+    {
+        return;
+    }
+
+    vidasMostradas = cantidad;
+
+    textoVidas->setPlainText(
+        "Vidas: " + QString::number(cantidad) + " / 3"
+        );
+}
+
+void VistaNivel1::cargarSpriteMuerte()
+{
+    spriteMuerte.load(
+        ":/sprites/dexter/muerte/dexter_muerte_00.png");
+
+    if (spriteMuerte.isNull())
+    {
+        throw runtime_error(
+            "No se pudo cargar el sprite de muerte");
+    }
+}
+
+void VistaNivel1::finalizarPartida()
+{
+    // Evitamos finalizar la partida varias veces
+    if (partidaTerminada)
+    {
+        return;
+    }
+
+    partidaTerminada = true;
+
+    // Detenemos el temporizador principal
+    temporizador->stop();
+
+    // Desactivamos el parpadeo rojo
+    efectoDano->setEnabled(false);
+
+    // Cambiamos el sprite de Dexter
+    figuraDexter->setPixmap(spriteMuerte);
+
+    // Eliminamos el desplazamiento de los sprites anteriores
+    figuraDexter->setOffset(0, 0);
+
+    // Calculamos las dimensiones graficas
+    float anchoSprite =
+        spriteMuerte.width() * figuraDexter->scale();
+
+    float altoSprite =
+        spriteMuerte.height() * figuraDexter->scale();
+
+    // Centramos el sprite respecto al cuerpo de Dexter
+    float posicionX =
+        nivel.getDexter().getX() +
+        nivel.getDexter().getAncho() / 2.0 -
+        anchoSprite / 2;
+
+    // Evitamos que quede fuera del escenario
+    if (posicionX < 0)
+    {
+        posicionX = 0;
+    }
+
+    if (posicionX + anchoSprite > 1280)
+    {
+        posicionX = 1280 - anchoSprite;
+    }
+
+    // Colocamos a Dexter acostado sobre el suelo
+    figuraDexter->setPos(
+        posicionX, 650 - altoSprite);
+
+    // Fondo del mensaje de derrota
+    escena->addRect(
+              340, 260, 600, 180,
+              QPen(QColor(140, 170, 112), 3),
+              QBrush(QColor(38, 59, 52))
+              )->setZValue(30);
+
+    // Mensaje de derrota
+    QGraphicsTextItem *mensaje =
+        escena->addText("¡PARTIDA TERMINADA!");
+
+    mensaje->setFont(
+        QFont("Consolas", 28, QFont::Bold));
+
+    mensaje->setDefaultTextColor(
+        QColor(255, 245, 217));
+
+    // Centramos el mensaje en el escenario
+    mensaje->setPos(
+        (1280 - mensaje->boundingRect().width()) / 2,
+        (700 - mensaje->boundingRect().height()) / 2
+        );
+
+    mensaje->setZValue(31);
 }

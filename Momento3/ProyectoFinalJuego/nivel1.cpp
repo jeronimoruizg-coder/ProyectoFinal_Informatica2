@@ -11,31 +11,43 @@ Nivel1::Nivel1()
     muestrasRecolectadas = 0;
     tiempoGeneracion = 0;
 
-    // Por ahora iniciamos en dificultad normal
+    // iniciamos en dificultad normal
     dificil = false;
 
     // Inicializamos la generacion de numeros aleatorios
     srand(time(0));
+
+    //Semillas
+    tiempoGeneracionSemillas = 0;
 }
 
-// Liberamos las muestras que queden al cerrar el nivel
+
 Nivel1::~Nivel1()
 {
+    // Liberamos las muestras que queden al cerrar el nivel
     for (int i = 0; i < muestras.size(); i++)
     {
         delete muestras[i];
     }
 
     muestras.clear();
+
+    // Liberamos las semillas restantes
+    for (int i = 0; i < semillas.size(); i++)
+    {
+        delete semillas[i];
+    }
+
+    semillas.clear();
 }
 
 // Actualizamos la logica del nivel
-void Nivel1::actualizar(int direccion,
-                        float intervaloTiempo)
+void Nivel1::actualizar(int direccion, float intervaloTiempo)
 {
     dexter.desplazarse(direccion, intervaloTiempo);
     dexter.aplicarGravedad(intervaloTiempo);
     dexter.actualizarRecoleccion(intervaloTiempo);
+    dexter.actualizarInvulnerabilidad(intervaloTiempo);
 
     // Acumulamos el tiempo para generar nuevas muestras
     tiempoGeneracion += intervaloTiempo;
@@ -48,6 +60,7 @@ void Nivel1::actualizar(int direccion,
     }
 
     actualizarMuestras(intervaloTiempo);
+    actualizarSemillas(intervaloTiempo);
 }
 
 // Solicitamos a Dexter saltar
@@ -125,7 +138,7 @@ void Nivel1::eliminarMuestra(int indice)
 }
 
 // Detectamos la interseccion entre dos rectangulos
-bool Nivel1::detectarRecoleccion(Recolectables *muestra)
+bool Nivel1::detectarRecoleccion(Objetos *muestra)
 {
     // Si Dexter no utiliza la red, no puede recolectar
     if (!dexter.estaRecolectando())
@@ -158,3 +171,87 @@ int Nivel1::getMuestrasRecolectadas()
 {
     return muestrasRecolectadas;
 }
+
+//------------------------------------ Semillas --------------------------------//
+// Generamos una semilla en una posicion aleatoria
+void Nivel1::generarSemilla()
+{
+    int posicionX = rand() % 1241;
+
+    SemillaExplosiva *semilla =
+        new SemillaExplosiva(posicionX);
+
+    semillas.push_back(semilla);
+}
+
+// Eliminamos una semilla y liberamos su memoria
+void Nivel1::eliminarSemilla(int indice)
+{
+    delete semillas[indice];
+
+    semillas.erase(semillas.begin() + indice);
+}
+
+// Actualizamos todas las semillas del nivel
+void Nivel1::actualizarSemillas(float intervaloTiempo)
+{
+    // Acumulamos el tiempo para generar semillas
+    tiempoGeneracionSemillas += intervaloTiempo;
+
+    if (tiempoGeneracionSemillas >= 5.0)
+    {
+        generarSemilla();
+
+        tiempoGeneracionSemillas -= 5.0;
+    }
+
+    int i = 0;
+
+    while (i < semillas.size())
+    {
+        // Actualizamos la caida o la explosion
+        semillas[i]->actualizar(intervaloTiempo);
+
+        // Si ya exploto, esperamos que termine
+        if (semillas[i]->haExplotado())
+        {
+            if (semillas[i]->terminoExplosion())
+            {
+                eliminarSemilla(i);
+            }
+            else
+            {
+                i++;
+            }
+        }
+
+        // Si llega al suelo, desaparece sin explotar
+        else if (semillas[i]->llegoAlSuelo())
+        {
+            eliminarSemilla(i);
+        }
+
+        // Si Dexter la atrapa, comienza la explosion
+        else if (detectarRecoleccion(semillas[i]))
+        {
+            semillas[i]->explotar();
+
+            // Aplicamos daño a Dexter
+            dexter.recibirDano();
+
+            i++;
+        }
+
+        else
+        {
+            i++;
+        }
+    }
+}
+
+//Getter de semilla
+const vector<SemillaExplosiva*>& Nivel1::getSemillas() const
+{
+    return semillas;
+}
+

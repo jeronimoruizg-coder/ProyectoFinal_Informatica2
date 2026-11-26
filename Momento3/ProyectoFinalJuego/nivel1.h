@@ -4,6 +4,7 @@
 #include "dexter.h"
 #include "recolectables.h"
 #include <vector>
+#include "semillaexplosiva.h"
 
 using namespace std;
 
@@ -25,7 +26,16 @@ private:
     void eliminarMuestra(int indice);
 
     // Comprueba la colision entre la red y una muestra
-    bool detectarRecoleccion(Recolectables *muestra);
+    bool detectarRecoleccion(Objetos *muestra);
+
+    // Semillas explosivas presentes en el nivel
+    vector<SemillaExplosiva*> semillas;
+    // Tiempo acumulado para generar semillas
+    float tiempoGeneracionSemillas;
+    // Funciones para administrar las semillas
+    void generarSemilla();
+    void actualizarSemillas(float intervaloTiempo);
+    void eliminarSemilla(int indice);
 
 public:
     Nivel1();
@@ -41,6 +51,9 @@ public:
     const vector<Recolectables*> &getMuestras();
 
     int getMuestrasRecolectadas();
+
+    // Consultar las semillas desde la vista
+    const vector<SemillaExplosiva*>& getSemillas() const;
 };
 
 #endif // NIVEL1_H

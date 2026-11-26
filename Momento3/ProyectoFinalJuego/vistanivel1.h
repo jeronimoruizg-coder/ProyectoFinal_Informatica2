@@ -13,6 +13,7 @@
 #include <QGraphicsTextItem>
 #include <QGraphicsRectItem>
 #include <QFont>
+#include <QGraphicsColorizeEffect>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ class VistaNivel1 : public QGraphicsView
 private:
     Nivel1 nivel;
     QGraphicsScene *escena;
-
+//--------------------------------------------------- Dexter -----------------------------------//
     //Representacion Grafica Dexter
     QGraphicsPixmapItem *figuraDexter;
 
@@ -30,8 +31,30 @@ private:
     vector<QPixmap> spritesCaminata;
     vector<QPixmap> spritesSalto;
     vector<QPixmap> spritesRecoleccion;
-    vector<QPixmap> spritesDano;
 
+    // Efecto visual de daño sobre Dexter
+    QGraphicsColorizeEffect *efectoDano;
+    // Actualizamos el parpadeo rojo
+    void actualizarEfectoDano();
+
+    // Contador de vidas
+    QGraphicsTextItem *textoVidas;
+    int vidasMostradas;
+
+    // Sprite de muerte
+    QPixmap spriteMuerte;
+
+    // Control de finalizacion de la partida
+    bool partidaTerminada;
+
+    // Funciones del contador de vidas
+    void crearContadorVidas();
+    void actualizarContadorVidas();
+
+    // Funciones relacionadas con la derrota
+    void cargarSpriteMuerte();
+    void finalizarPartida();
+//--------------------------------------------------- Muestras ----------------------------------//
     // Representaciones graficamente de las muestras
     vector<QGraphicsPixmapItem*> figurasMuestras;
     // Texto que muestra la cantidad recolectada
@@ -50,7 +73,7 @@ private:
     QPixmap spriteMuestraEspecial;
     // Carga las imagenes de las muestras una sola vez
     void cargarSpritesMuestras();
-
+//-------------------------------------------------- Interaccion Teclado -------------------------//
     bool izquierdaPresionada; // comprobamos que tecla se esta presionando
     bool derechaPresionada;
     bool saltarPresionado;
@@ -66,6 +89,22 @@ private:
     void actualizarJuego();
     void actualizarAnimacion(int direccion);
     void mostrarFotograma(const QPixmap &imagen);// Muestra el fotograma segun la orientacion de Dexter
+
+
+    // Sprite de la semilla explosiva
+    QPixmap spriteSemilla;
+    // Fotogramas de la explosion
+    vector<QPixmap> spritesExplosion;
+    // Representaciones graficas de las semillas
+    vector<QGraphicsPixmapItem*> figurasSemillas;
+    // Funciones graficas de las semillas
+    void cargarSpriteSemilla();
+    void cargarSpritesExplosion();
+    void actualizarSemillasGraficas();
+
+
+
+
 public:
     VistaNivel1();
 
