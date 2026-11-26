@@ -21,15 +21,18 @@ Dexter::Dexter()
     tiempoSuero = 0;
 }
 
-void Dexter::mover(int dirX, int dirY, Mapa &mapa)
+void Dexter::mover(int dirX, int dirY, float intervaloTiempo, Mapa &mapa)
 {
+    // distancia que avanza en este intervalo (MRU)
+    float paso = velocidad * intervaloTiempo;
+
     // cada eje se revisa por separado para que pueda deslizarse por las paredes
-    float nuevaX = x + dirX * velocidad;
+    float nuevaX = x + dirX * paso;
     if (!chocaConPared(nuevaX, y, mapa)) {
         x = nuevaX;
     }
 
-    float nuevaY = y + dirY * velocidad;
+    float nuevaY = y + dirY * paso;
     if (!chocaConPared(x, nuevaY, mapa)) {
         y = nuevaY;
     }
@@ -336,4 +339,29 @@ void Dexter::actualizarRalentizacion(float intervaloTiempo)
 bool Dexter::estaRalentizado() const
 {
     return tiempoRalentizacion > 0;
+}
+
+//---------------------------------//-----------------------------------//
+
+//Nivel 2
+void Dexter::iniciarNivel2() //Modificamos los atributos de dexter para el laberinto
+{
+
+    ancho = 36;
+    alto = 36;
+
+    // arranca centrado en la casilla (1, 1)
+    x = 1 * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - ancho) / 2;
+    y = 1 * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - alto) / 2;
+
+    velocidad = 180;   // pixeles por segundo
+    velocidadY = 0;
+    orientacion = 1;
+    tiempoRecoleccion = 0;
+
+    vidas = 3;
+    tiempoInvulnerabilidad = 0;
+    tiempoSuero = 0;
+    tiempoRalentizacion = 0;
+
 }

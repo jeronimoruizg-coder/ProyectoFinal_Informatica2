@@ -44,6 +44,8 @@ qt_add_executable(ProyectoFinalJuego
         jabali.h jabali.cpp
         guacamaya.h guacamaya.cpp
         excremento.h excremento.cpp
+        nivel2.h nivel2.cpp
+        vistanivel2.h vistanivel2.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

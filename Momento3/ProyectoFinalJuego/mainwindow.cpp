@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "vistanivel1.h"
+#include "vistanivel2.h"
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
@@ -139,6 +140,19 @@ void MainWindow::iniciarNivel1(bool dificultad)
     vistaNivel1->setFocus();
 }
 
+void MainWindow::iniciarNivel2(bool dificultad)
+{
+    // Creamos el nivel 2 con la dificultad seleccionada
+    VistaNivel2 *vistaNivel2 =
+        new VistaNivel2(dificultad);
+
+    // Mostramos el nivel
+    setCentralWidget(vistaNivel2);
+
+    // Permitimos recibir las acciones del teclado
+    vistaNivel2->setFocus();
+}
+
 void MainWindow::jugar()
 {
     // Consultamos la dificultad seleccionada
@@ -152,9 +166,6 @@ void MainWindow::jugar()
     }
     else
     {
-        QMessageBox::information(
-            this,
-            "Nivel 2",
-            "Nivel pendiente de integracion");
+        iniciarNivel2(dificultad);
     }
 }
