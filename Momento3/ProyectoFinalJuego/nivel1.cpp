@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Nivel1::Nivel1(): inteligenciaGuacamaya(3)
+Nivel1::Nivel1(bool dificultad): inteligenciaGuacamaya(3)
 {
     dexter.iniciarNivel1();
 
@@ -13,10 +13,11 @@ Nivel1::Nivel1(): inteligenciaGuacamaya(3)
     velocidadHorizontalDexter = 0;
 
     muestrasRecolectadas = 0;
+    tiempoRestante = 90;
     tiempoGeneracion = 0;
 
     // iniciamos en dificultad normal
-    dificil = true;
+    dificil = dificultad;
 
     // Inicializamos la generacion de numeros aleatorios
     srand(time(0));
@@ -99,6 +100,24 @@ Nivel1::~Nivel1()
 // Actualizamos la logica del nivel
 void Nivel1::actualizar(int direccion, float intervaloTiempo)
 {
+
+    // Evitamos actualizar una partida finalizada
+    if (haGanado() || haPerdido())
+    {
+        return;
+    }
+
+    // Descontamos el tiempo transcurrido
+    tiempoRestante -= intervaloTiempo;
+
+    // Evitamos valores negativos
+    if (tiempoRestante <= 0)
+    {
+        tiempoRestante = 0;
+        return;
+    }
+
+
     dexter.desplazarse(direccion, intervaloTiempo);
     // Calculamos la velocidad horizontal real de Dexter
     velocidadHorizontalDexter =
@@ -124,6 +143,11 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
     }
 
     actualizarMuestras(intervaloTiempo);
+    // Finalizamos inmediatamente al alcanzar el objetivo de mustras
+    if (haGanado())
+    {
+        return;
+    }
     actualizarSemillas(intervaloTiempo);
     actualizarBeneficios(intervaloTiempo);
     actualizarHormigas(intervaloTiempo);
@@ -813,4 +837,23 @@ bool Nivel1::debeLanzarExcremento(Guacamaya *guacamaya)
 
     // Lanzamos si estamos suficientemente cerca
     return std::abs(centroGuacamaya - objetivo) <= 25;
+}
+
+int Nivel1::getTiempoRestante() const
+{
+    return static_cast<int>(
+        std::ceil(tiempoRestante));
+}
+
+bool Nivel1::haGanado() const
+{
+    return muestrasRecolectadas >= 20
+           && tiempoRestante > 0
+           && dexter.getVidas() > 0;
+}
+
+bool Nivel1::haPerdido() const
+{
+    return dexter.getVidas() <= 0
+           || tiempoRestante <= 0;
 }

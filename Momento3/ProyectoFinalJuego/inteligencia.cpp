@@ -1,7 +1,6 @@
 #include "inteligencia.h"
 #include <cstdlib>
 #include <stdexcept>
-#include <iostream>
 
 Inteligencia::Inteligencia(int numOpciones)
 {
@@ -97,24 +96,5 @@ void Inteligencia::registrarResultado(
     if (acerto)
     {
         aciertos[opcion]++;
-    }
-    // Prueba temporal del aprendizaje
-    std::cout << "\n--- INTELIGENCIA ---" << std::endl;
-
-    std::cout << "Estrategia utilizada: "
-              << opcion << std::endl;
-
-    std::cout << "Resultado: "
-              << (acerto ? "Acierto" : "Fallo")
-              << std::endl;
-
-    for (int i = 0; i < cantidadOpciones; i++)
-    {
-        std::cout << "Estrategia " << i
-                  << " | Intentos: " << intentos[i]
-                  << " | Aciertos: " << aciertos[i]
-                  << " | Efectividad: "
-                  << calcularEfectividad(i) * 100
-                  << "%" << std::endl;
     }
 }
