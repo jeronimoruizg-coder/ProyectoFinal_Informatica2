@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<RCC>
+  <qresource prefix="/">
+    <file>sprites/enemigos/guacamaya/guacamaya_00.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_01.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_02.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_03.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_04.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_05.png</file>
+    <file>sprites/enemigos/guacamaya/guacamaya_06.png</file>
+    <file>sprites/objetos/excremento/excremento_caida_00.png</file>
+    <file>sprites/objetos/excremento/excremento_suelo_00.png</file>
+  </qresource>
+</RCC>

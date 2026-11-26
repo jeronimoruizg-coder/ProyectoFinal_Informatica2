@@ -8,6 +8,9 @@
 #include "beneficios.h"
 #include "hormiga.h"
 #include "jabali.h"
+#include "guacamaya.h"
+#include "excremento.h"
+#include "inteligencia.h"
 
 using namespace std;
 
@@ -72,8 +75,34 @@ private:
     void actualizarJabalis(float intervaloTiempo);
     void eliminarJabali(int indice);
 
+    // Guacamayas presentes en el escenario
+    vector<Guacamaya*> guacamayas;
+    // Tiempo acumulado para generar guacamayas
+    float tiempoGeneracionGuacamaya;
+    // Administracion de las guacamayas
+    void generarGuacamaya();
+    void actualizarGuacamayas(float intervaloTiempo);
+    void eliminarGuacamaya(int indice);
+
+    // Excrementos presentes en el escenario
+    vector<Excremento*> excrementos;
+    // Administracion de los excrementos
+    void generarExcremento(Guacamaya *guacamaya);
+    void actualizarExcrementos(float intervaloTiempo);
+    void eliminarExcremento(int indice);
+    // Deteccion de contacto con Dexter
+    bool detectarContactoExcremento(Excremento *excremento);
+
     // Colision entre Dexter y un enemigo
     bool detectarColisionEnemigo(Enemigos *enemigo);
+
+    // Aprendizaje compartido entre las guacamayas
+    Inteligencia inteligenciaGuacamaya;
+    // Informacion del movimiento de Dexter
+    float posicionAnteriorDexter;
+    float velocidadHorizontalDexter;
+    // Prediccion de lanzamientos
+    bool debeLanzarExcremento(Guacamaya *guacamaya);
 
 public:
     Nivel1();
@@ -103,6 +132,12 @@ public:
     // Consultas para representar la advertencia
     bool hayAdvertenciaJabali() const;
     int getDireccionJabali() const;
+
+    //Consulta Guacamaya
+    const vector<Guacamaya*>& getGuacamayas() const;
+
+    //Consulta Excrementos
+    const vector<Excremento*>& getExcrementos() const;
 };
 
 #endif // NIVEL1_H

@@ -148,8 +148,31 @@ private:
     void cargarSpritesJabali();
     void actualizarJabalisGraficos();
     void actualizarAdvertenciaJabali();
+//--------------------------------------------------- Guacamayas ----------------------------------//
+    // Fotogramas compartidos de la guacamaya
+    vector<QPixmap> spritesGuacamaya;
 
+    // Representaciones graficas
+    vector<QGraphicsPixmapItem*> figurasGuacamayas;
 
+    // Control de la animacion
+    int fotogramaGuacamaya;
+    int tiempoAnimacionGuacamaya;
+
+    // Funciones graficas
+    void cargarSpritesGuacamaya();
+    void actualizarGuacamayasGraficas();
+//--------------------------------------------------- Excrementos ----------------------------------//
+    // Sprites compartidos de los excrementos
+    QPixmap spriteExcrementoCaida;
+    QPixmap spriteExcrementoSuelo;
+
+    // Representaciones graficas
+    vector<QGraphicsPixmapItem*> figurasExcrementos;
+
+    // Funciones graficas
+    void cargarSpritesExcrementos();
+    void actualizarExcrementosGraficos();
 
 
 
