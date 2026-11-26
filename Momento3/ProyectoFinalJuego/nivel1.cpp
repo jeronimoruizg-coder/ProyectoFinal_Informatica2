@@ -23,6 +23,12 @@ Nivel1::Nivel1()
     //Tiempo de generacion de beneficios
     tiempoGeneracionMedicinal = 0;
     tiempoGeneracionSuero = 0;
+
+    //Tiempo de generacion de enemigos
+    tiempoGeneracionHormigas = 0;
+    tiempoGeneracionJabali = 0;
+    tiempoAdvertenciaJabali = 0;
+    direccionJabali = 1;
 }
 
 
@@ -51,6 +57,22 @@ Nivel1::~Nivel1()
     }
 
     beneficios.clear();
+
+    // Liberamos las hormigas restantes
+    for (int i = 0; i < hormigas.size(); i++)
+    {
+        delete hormigas[i];
+    }
+
+    hormigas.clear();
+
+    // Liberamos los jabalis restantes
+    for (int i = 0; i < jabalis.size(); i++)
+    {
+        delete jabalis[i];
+    }
+
+    jabalis.clear();
 }
 
 // Actualizamos la logica del nivel
@@ -75,6 +97,8 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
     actualizarMuestras(intervaloTiempo);
     actualizarSemillas(intervaloTiempo);
     actualizarBeneficios(intervaloTiempo);
+    actualizarHormigas(intervaloTiempo);
+    actualizarJabalis(intervaloTiempo);
 }
 
 // Solicitamos a Dexter saltar
@@ -347,4 +371,187 @@ void Nivel1::actualizarBeneficios(float intervaloTiempo)
 const vector<Beneficios*>& Nivel1::getBeneficios() const
 {
     return beneficios;
+}
+
+void Nivel1::generarHormiga()
+{
+    // Elegimos aleatoriamente el sentido
+    int sentido = 1;
+
+    if (rand() % 2 == 0)
+    {
+        sentido = -1;
+    }
+
+    Hormiga *hormiga = new Hormiga(sentido);
+
+    hormigas.push_back(hormiga);
+}
+
+void Nivel1::eliminarHormiga(int indice)
+{
+    delete hormigas[indice];
+
+    hormigas.erase(hormigas.begin() + indice);
+}
+
+bool Nivel1::detectarColisionEnemigo(Enemigos *enemigo)
+{
+    return
+        dexter.getX() <
+            enemigo->getX() + enemigo->getAncho()
+
+        && dexter.getX() + dexter.getAncho() >
+               enemigo->getX()
+
+        && dexter.getY() <
+               enemigo->getY() + enemigo->getAlto()
+
+        && dexter.getY() + dexter.getAlto() >
+               enemigo->getY();
+}
+
+void Nivel1::actualizarHormigas(float intervaloTiempo)
+{
+    tiempoGeneracionHormigas += intervaloTiempo;
+
+    int frecuencia = 6;
+
+    // Mayor frecuencia en dificultad dificil
+    if (dificil)
+    {
+        frecuencia = 4;
+    }
+
+    if (tiempoGeneracionHormigas >= frecuencia)
+    {
+        generarHormiga();
+
+        tiempoGeneracionHormigas -= frecuencia;
+    }
+
+    int i = 0;
+
+    while (i < hormigas.size())
+    {
+        hormigas[i]->moverse(intervaloTiempo);
+
+        // Eliminamos las hormigas que salen
+        if (hormigas[i]->salioDelEscenario())
+        {
+            eliminarHormiga(i);
+        }
+        else
+        {
+            // Comprobamos el contacto con Dexter
+            if (detectarColisionEnemigo(hormigas[i]))
+            {
+                dexter.recibirDano();
+            }
+
+            i++;
+        }
+    }
+}
+
+const vector<Hormiga*>& Nivel1::getHormigas() const
+{
+    return hormigas;
+}
+
+
+void Nivel1::generarJabali()
+{
+    Jabali *jabali = new Jabali(direccionJabali);
+
+    jabalis.push_back(jabali);
+}
+
+void Nivel1::eliminarJabali(int indice)
+{
+    delete jabalis[indice];
+
+    jabalis.erase(jabalis.begin() + indice);
+}
+
+void Nivel1::actualizarJabalis(float intervaloTiempo)
+{
+    // Acumulamos el tiempo de generacion
+    tiempoGeneracionJabali += intervaloTiempo;
+
+    int frecuencia = 20;
+
+    if (dificil)
+    {
+        frecuencia = 15;
+    }
+
+    // Si existe una advertencia activa
+    if (tiempoAdvertenciaJabali > 0)
+    {
+        tiempoAdvertenciaJabali -= intervaloTiempo;
+
+        // Cuando termina la advertencia aparece el jabali
+        if (tiempoAdvertenciaJabali <= 0)
+        {
+            tiempoAdvertenciaJabali = 0;
+
+            generarJabali();
+        }
+    }
+
+    // Iniciamos la advertencia dos segundos antes
+    // de la aparicion del jabali
+    else if (tiempoGeneracionJabali >= frecuencia - 2)
+    {
+        tiempoGeneracionJabali -= frecuencia;
+
+        // Elegimos aleatoriamente la direccion
+        direccionJabali = 1;
+
+        if (rand() % 2 == 0)
+        {
+            direccionJabali = -1;
+        }
+
+        tiempoAdvertenciaJabali = 2;
+    }
+
+    // Actualizamos los jabalis existentes
+    int i = 0;
+
+    while (i < jabalis.size())
+    {
+        jabalis[i]->moverse(intervaloTiempo);
+
+        if (jabalis[i]->salioDelEscenario())
+        {
+            eliminarJabali(i);
+        }
+        else
+        {
+            // Reutilizamos la deteccion de colisiones
+            if (detectarColisionEnemigo(jabalis[i]))
+            {
+                dexter.recibirDano();
+            }
+
+            i++;
+        }
+    }
+}
+
+const vector<Jabali*>& Nivel1::getJabalis() const
+{
+    return jabalis;
+}
+
+bool Nivel1::hayAdvertenciaJabali() const
+{
+    return tiempoAdvertenciaJabali > 0;
+}
+
+int Nivel1::getDireccionJabali() const
+{
+    return direccionJabali;
 }

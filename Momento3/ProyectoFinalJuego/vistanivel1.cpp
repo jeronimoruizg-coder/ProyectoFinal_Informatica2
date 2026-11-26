@@ -46,6 +46,8 @@ VistaNivel1::VistaNivel1() {
         cargarSpritesExplosion();
         cargarSpriteMuerte();
         cargarSpritesBeneficios();
+        cargarSpritesHormiga();
+        cargarSpritesJabali();
     }
     catch (const runtime_error &error)
     {
@@ -57,7 +59,18 @@ VistaNivel1::VistaNivel1() {
         return;
     }
 
-    // Mostramos el fotograma de reposo
+
+    // Creamos una unica figura para la advertencia
+    figuraAdvertencia =
+        escena->addPixmap(spritesAdvertencia[0]);
+    // La colocamos por encima de los objetos del juego
+    figuraAdvertencia->setZValue(15);
+    // Inicialmente permanece oculta
+    figuraAdvertencia->hide();
+
+
+
+    // Mostramos el fotograma de reposo Dexter
     figuraDexter = escena->addPixmap(spritesReposo[0]);
     figuraDexter->setScale(2);  // Duplicamos el tamaño visual de la imagen
     figuraDexter->setOffset(-19.5, -25); // Ajustamos la imagen respecto a la posicion fisica
@@ -91,6 +104,17 @@ VistaNivel1::VistaNivel1() {
     // Conectamos la señal con nuestra funcion
     connect(temporizador, &QTimer::timeout,this, &VistaNivel1::actualizarJuego);
     temporizador->start(16);
+
+    // inicializamos los fotogramas de hormiga
+    fotogramaHormiga = 0;
+    tiempoAnimacionHormiga = 0;
+
+     // inicializamos los fotogramas de jabali y advertencia
+    fotogramaJabali = 0;
+    tiempoAnimacionJabali = 0;
+
+    fotogramaAdvertencia = 0;
+    tiempoAnimacionAdvertencia = 0;
 
 }
 
@@ -218,6 +242,13 @@ void VistaNivel1::actualizarJuego()
 
     // Actualizamos el contador de vidas
     actualizarContadorVidas();
+
+    //Actualizamos las homigas que aparecen en la pantalla
+    actualizarHormigasGraficas();
+    \
+    //Actualizamos los jabalis y advertencias que aparecen en la pantalla
+    actualizarJabalisGraficos();
+    actualizarAdvertenciaJabali();
 
     // Comprobamos si Dexter ha perdido
     if (nivel.getDexter().getVidas() <= 0)
@@ -755,6 +786,8 @@ void VistaNivel1::finalizarPartida()
 
     partidaTerminada = true;
 
+    figuraAdvertencia->hide();
+
     // Detenemos el temporizador principal
     temporizador->stop();
 
@@ -906,3 +939,273 @@ void VistaNivel1::actualizarBeneficiosGraficos()
             beneficios[i]->getY());
     }
 }
+
+//--------------------------------------------------- Hormigas ----------------------------------//
+
+void VistaNivel1::cargarSpritesHormiga()
+{
+    cargarAnimacion(
+        spritesHormiga,
+        ":/sprites/enemigos/hormiga", 8);
+
+    for (int i = 0; i < spritesHormiga.size(); i++)
+    {
+        spritesHormiga[i] =
+            spritesHormiga[i].scaled(
+                70, 50,
+                Qt::IgnoreAspectRatio,
+                Qt::FastTransformation);
+    }
+}
+
+
+void VistaNivel1::actualizarHormigasGraficas()
+{
+    const vector<Hormiga*>& hormigas =
+        nivel.getHormigas();
+
+    // Creamos las figuras necesarias
+    while (figurasHormigas.size() < hormigas.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(spritesHormiga[0]);
+
+        figurasHormigas.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasHormigas.size() > hormigas.size())
+    {
+        delete figurasHormigas.back();
+
+        figurasHormigas.pop_back();
+    }
+
+    // Si no hay hormigas, no actualizamos la animacion
+    if (hormigas.empty())
+    {
+        return;
+    }
+
+    // Avanzamos la animacion
+    tiempoAnimacionHormiga += 16;
+
+    if (tiempoAnimacionHormiga >= 100)
+    {
+        tiempoAnimacionHormiga -= 100;
+
+        fotogramaHormiga++;
+
+        if (fotogramaHormiga >= 8)
+        {
+            fotogramaHormiga = 0;
+        }
+    }
+
+    const QPixmap &imagen =
+        spritesHormiga[fotogramaHormiga];
+
+    for (int i = 0; i < hormigas.size(); i++)
+    {
+        // Cambiamos la imagen solo cuando sea necesario
+        if (figurasHormigas[i]->pixmap().cacheKey()
+            != imagen.cacheKey())
+        {
+            figurasHormigas[i]->setPixmap(imagen);
+        }
+
+        // Orientamos la figura sin duplicar los sprites
+        if (hormigas[i]->getDireccion() == 1)
+        {
+            figurasHormigas[i]->setTransform(
+                QTransform());
+        }
+        else
+        {
+            QTransform transformacion;
+
+            transformacion.translate(imagen.width(), 0);
+            transformacion.scale(-1, 1);
+
+            figurasHormigas[i]->setTransform(
+                transformacion);
+        }
+
+        // Actualizamos la posicion
+        figurasHormigas[i]->setPos(
+            hormigas[i]->getX(),
+            hormigas[i]->getY());
+    }
+}
+
+
+void VistaNivel1::cargarSpritesJabali()
+{
+    // Cargamos los ocho fotogramas del jabali
+    cargarAnimacion(
+        spritesJabali,
+        ":/sprites/enemigos/jabali", 8);
+
+    // Cargamos los siete fotogramas de advertencia
+    cargarAnimacion(
+        spritesAdvertencia,
+        ":/sprites/enemigos/advertencia", 7);
+
+    // Ajustamos el tamano del jabali
+    for (int i = 0; i < spritesJabali.size(); i++)
+    {
+        spritesJabali[i] =
+            spritesJabali[i].scaled(
+                110, 60,
+                Qt::IgnoreAspectRatio,
+                Qt::FastTransformation);
+    }
+
+    // Ajustamos el tamano de la advertencia
+    for (int i = 0; i < spritesAdvertencia.size(); i++)
+    {
+        spritesAdvertencia[i] =
+            spritesAdvertencia[i].scaled(
+                60, 80,
+                Qt::KeepAspectRatio,
+                Qt::FastTransformation);
+    }
+}
+
+void VistaNivel1::actualizarJabalisGraficos()
+{
+    const vector<Jabali*>& jabalis =
+        nivel.getJabalis();
+
+    // Creamos las figuras necesarias
+    while (figurasJabalis.size() < jabalis.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(spritesJabali[0]);
+
+        figurasJabalis.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasJabalis.size() > jabalis.size())
+    {
+        delete figurasJabalis.back();
+
+        figurasJabalis.pop_back();
+    }
+
+    // No procesamos animaciones si no hay jabalis
+    if (jabalis.empty())
+    {
+        return;
+    }
+
+    // Actualizamos el fotograma
+    tiempoAnimacionJabali += 16;
+
+    if (tiempoAnimacionJabali >= 60)
+    {
+        tiempoAnimacionJabali -= 60;
+
+        fotogramaJabali++;
+
+        if (fotogramaJabali >= 8)
+        {
+            fotogramaJabali = 0;
+        }
+    }
+
+    const QPixmap &imagen =
+        spritesJabali[fotogramaJabali];
+
+    for (int i = 0; i < jabalis.size(); i++)
+    {
+        // Cambiamos la imagen cuando sea necesario
+        if (figurasJabalis[i]->pixmap().cacheKey()
+            != imagen.cacheKey())
+        {
+            figurasJabalis[i]->setPixmap(imagen);
+        }
+
+        // Calculamos la orientacion
+        QTransform transformacion;
+
+        if (jabalis[i]->getDireccion() == -1)
+        {
+            transformacion.translate(imagen.width(), 0);
+
+            transformacion.scale(-1, 1);
+        }
+
+        // Solo modificamos la transformacion si cambia
+        if (figurasJabalis[i]->transform()
+            != transformacion)
+        {
+            figurasJabalis[i]->setTransform(
+                transformacion);
+        }
+
+        // Actualizamos la posicion
+        figurasJabalis[i]->setPos(
+            jabalis[i]->getX(),
+            jabalis[i]->getY());
+    }
+}
+
+
+
+void VistaNivel1::actualizarAdvertenciaJabali()
+{
+    // Si no existe una advertencia, ocultamos la figura
+    if (!nivel.hayAdvertenciaJabali())
+    {
+        figuraAdvertencia->hide();
+
+        fotogramaAdvertencia = 0;
+        tiempoAnimacionAdvertencia = 0;
+
+        return;
+    }
+
+    // Actualizamos la animacion
+    tiempoAnimacionAdvertencia += 16;
+
+    if (tiempoAnimacionAdvertencia >= 100)
+    {
+        tiempoAnimacionAdvertencia -= 100;
+
+        fotogramaAdvertencia++;
+
+        if (fotogramaAdvertencia >= 7)
+        {
+            fotogramaAdvertencia = 0;
+        }
+    }
+
+    const QPixmap &imagen =
+        spritesAdvertencia[fotogramaAdvertencia];
+
+    // Actualizamos el sprite si ha cambiado
+    if (figuraAdvertencia->pixmap().cacheKey()
+        != imagen.cacheKey())
+    {
+        figuraAdvertencia->setPixmap(imagen);
+    }
+
+    // Determinamos en que extremo mostrar la advertencia
+    if (nivel.getDireccionJabali() == 1)
+    {
+        figuraAdvertencia->setPos(
+            20, 550 - imagen.height());
+    }
+    else
+    {
+        figuraAdvertencia->setPos(
+            1260 - imagen.width(),
+            550 - imagen.height());
+    }
+
+    // Hacemos visible la advertencia
+    figuraAdvertencia->show();
+}
+

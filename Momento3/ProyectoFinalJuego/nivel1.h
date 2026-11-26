@@ -6,6 +6,8 @@
 #include <vector>
 #include "semillaexplosiva.h"
 #include "beneficios.h"
+#include "hormiga.h"
+#include "jabali.h"
 
 using namespace std;
 
@@ -48,6 +50,31 @@ private:
     void actualizarBeneficios(float intervaloTiempo);
     void eliminarBeneficio(int indice);
 
+    // Hormigas presentes en el escenario
+    vector<Hormiga*> hormigas;
+    // Tiempo acumulado para generar hormigas
+    float tiempoGeneracionHormigas;
+    // Administracion de las hormigas
+    void generarHormiga();
+    void actualizarHormigas(float intervaloTiempo);
+    void eliminarHormiga(int indice);
+
+    // Jabalis presentes en el escenario
+    vector<Jabali*> jabalis;
+    // Tiempo acumulado para la aparicion
+    float tiempoGeneracionJabali;
+    // Tiempo restante de la advertencia
+    float tiempoAdvertenciaJabali;
+    // Direccion del proximo jabali
+    int direccionJabali;
+    // Administracion de los jabalis
+    void generarJabali();
+    void actualizarJabalis(float intervaloTiempo);
+    void eliminarJabali(int indice);
+
+    // Colision entre Dexter y un enemigo
+    bool detectarColisionEnemigo(Enemigos *enemigo);
+
 public:
     Nivel1();
     ~Nivel1();
@@ -65,8 +92,17 @@ public:
 
     // Consultar las semillas desde la vista
     const vector<SemillaExplosiva*>& getSemillas() const;
+
     //Consulta Objetos beneficio
     const vector<Beneficios*>& getBeneficios() const;
+
+    //Consulta Hormigas
+    const vector<Hormiga*>& getHormigas() const;
+
+    const vector<Jabali*>& getJabalis() const;
+    // Consultas para representar la advertencia
+    bool hayAdvertenciaJabali() const;
+    int getDireccionJabali() const;
 };
 
 #endif // NIVEL1_H

@@ -90,7 +90,7 @@ private:
     void actualizarAnimacion(int direccion);
     void mostrarFotograma(const QPixmap &imagen);// Muestra el fotograma segun la orientacion de Dexter
 
-
+//--------------------------------------------------- Semilla ----------------------------------//
     // Sprite de la semilla explosiva
     QPixmap spriteSemilla;
     // Fotogramas de la explosion
@@ -101,7 +101,7 @@ private:
     void cargarSpriteSemilla();
     void cargarSpritesExplosion();
     void actualizarSemillasGraficas();
-
+//--------------------------------------------------- Beneficios ----------------------------------//
     // Sprites de los objetos beneficiosos
     QPixmap spriteMedicinal;
     QPixmap spriteSuero;
@@ -112,6 +112,45 @@ private:
     // Funciones graficas de los beneficios
     void cargarSpritesBeneficios();
     void actualizarBeneficiosGraficos();
+//--------------------------------------------------- Hormigas ----------------------------------//
+    // Fotogramas de la hormiga
+    vector<QPixmap> spritesHormiga;
+
+    // Figuras graficas de las hormigas
+    vector<QGraphicsPixmapItem*> figurasHormigas;
+
+    // Control de la animacion
+    int fotogramaHormiga;
+    int tiempoAnimacionHormiga;
+
+    // Funciones graficas
+    void cargarSpritesHormiga();
+    void actualizarHormigasGraficas();
+//--------------------------------------------------- Jabalis ----------------------------------//
+    // Fotogramas del jabali y su advertencia
+    vector<QPixmap> spritesJabali;
+    vector<QPixmap> spritesAdvertencia;
+
+    // Representaciones graficas
+    vector<QGraphicsPixmapItem*> figurasJabalis;
+
+    QGraphicsPixmapItem *figuraAdvertencia;
+
+    // Control de la animacion del jabali
+    int fotogramaJabali;
+    int tiempoAnimacionJabali;
+
+    // Control de la animacion de advertencia
+    int fotogramaAdvertencia;
+    int tiempoAnimacionAdvertencia;
+
+    // Funciones graficas
+    void cargarSpritesJabali();
+    void actualizarJabalisGraficos();
+    void actualizarAdvertenciaJabali();
+
+
+
 
 
 public:
