@@ -102,7 +102,16 @@ private:
     void cargarSpritesExplosion();
     void actualizarSemillasGraficas();
 
+    // Sprites de los objetos beneficiosos
+    QPixmap spriteMedicinal;
+    QPixmap spriteSuero;
 
+    // Representaciones graficas de los beneficios
+    vector<QGraphicsPixmapItem*> figurasBeneficios;
+
+    // Funciones graficas de los beneficios
+    void cargarSpritesBeneficios();
+    void actualizarBeneficiosGraficos();
 
 
 public:

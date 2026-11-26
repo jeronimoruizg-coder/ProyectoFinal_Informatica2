@@ -5,6 +5,7 @@
 #include "recolectables.h"
 #include <vector>
 #include "semillaexplosiva.h"
+#include "beneficios.h"
 
 using namespace std;
 
@@ -37,6 +38,16 @@ private:
     void actualizarSemillas(float intervaloTiempo);
     void eliminarSemilla(int indice);
 
+    // Objetos beneficiosos
+    vector<Beneficios*> beneficios;
+    // Tiempos de generacion
+    float tiempoGeneracionMedicinal;
+    float tiempoGeneracionSuero;
+    // Administracion de los beneficios
+    void generarBeneficio(int tipo);
+    void actualizarBeneficios(float intervaloTiempo);
+    void eliminarBeneficio(int indice);
+
 public:
     Nivel1();
     ~Nivel1();
@@ -54,6 +65,8 @@ public:
 
     // Consultar las semillas desde la vista
     const vector<SemillaExplosiva*>& getSemillas() const;
+    //Consulta Objetos beneficio
+    const vector<Beneficios*>& getBeneficios() const;
 };
 
 #endif // NIVEL1_H

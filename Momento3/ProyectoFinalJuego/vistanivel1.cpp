@@ -45,6 +45,7 @@ VistaNivel1::VistaNivel1() {
         cargarSpriteSemilla();
         cargarSpritesExplosion();
         cargarSpriteMuerte();
+        cargarSpritesBeneficios();
     }
     catch (const runtime_error &error)
     {
@@ -208,6 +209,9 @@ void VistaNivel1::actualizarJuego()
 
     // Actualizamos las semillas que aparecen en pantalla
     actualizarSemillasGraficas();
+
+    // Actualizamos los beneficios que aparecen en pantalla
+    actualizarBeneficiosGraficos();
 
     // Actualizamos el contador de muestras
     actualizarContadorMuestras();
@@ -815,4 +819,90 @@ void VistaNivel1::finalizarPartida()
         );
 
     mensaje->setZValue(31);
+}
+
+void VistaNivel1::cargarSpritesBeneficios()
+{
+    // Cargamos las imagenes
+    spriteMedicinal.load(
+        ":/sprites/objetos/medicinal/medicinal_00.png");
+
+    spriteSuero.load(
+        ":/sprites/objetos/suero/suero_00.png");
+
+    // Verificamos que se hayan cargado correctamente
+    if (spriteMedicinal.isNull())
+    {
+        throw runtime_error(
+            "No se pudo cargar la planta medicinal");
+    }
+
+    if (spriteSuero.isNull())
+    {
+        throw runtime_error(
+            "No se pudo cargar el suero");
+    }
+
+    // Ajustamos las dimensiones de las imagenes
+    spriteMedicinal = spriteMedicinal.scaled(
+        40, 40,
+        Qt::IgnoreAspectRatio,
+        Qt::FastTransformation);
+
+    spriteSuero = spriteSuero.scaled(
+        40, 40,
+        Qt::IgnoreAspectRatio,
+        Qt::FastTransformation);
+}
+
+void VistaNivel1::actualizarBeneficiosGraficos()
+{
+    // Consultamos los beneficios existentes
+    const vector<Beneficios*>& beneficios =
+        nivel.getBeneficios();
+
+    // Creamos las figuras que hagan falta
+    while (figurasBeneficios.size() < beneficios.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(QPixmap());
+
+        figurasBeneficios.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasBeneficios.size() > beneficios.size())
+    {
+        delete figurasBeneficios.back();
+
+        figurasBeneficios.pop_back();
+    }
+
+    // Actualizamos las figuras existentes
+    for (int i = 0; i < beneficios.size(); i++)
+    {
+        const QPixmap *imagen;
+
+        // Seleccionamos el sprite correspondiente
+        if (beneficios[i]->getTipo() == 0)
+        {
+            imagen = &spriteMedicinal;
+        }
+        else
+        {
+            imagen = &spriteSuero;
+        }
+
+        // Cambiamos la imagen solo cuando sea necesario
+        if (figurasBeneficios[i]->pixmap().cacheKey()
+            != imagen->cacheKey())
+        {
+            figurasBeneficios[i]->setPixmap(*imagen);
+        }
+
+        // Actualizamos la posicion grafica
+        figurasBeneficios[i]->setPos(
+            beneficios[i]->getX(),
+            beneficios[i]->getY());
+    }
 }
