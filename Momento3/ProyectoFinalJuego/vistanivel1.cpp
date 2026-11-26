@@ -38,6 +38,7 @@ VistaNivel1::VistaNivel1() {
     try
     {
         cargarSprites();
+        cargarSpritesMuestras();
     }
     catch (const runtime_error &error)
     {
@@ -54,6 +55,9 @@ VistaNivel1::VistaNivel1() {
     figuraDexter->setScale(2);  // Duplicamos el tamaño visual de la imagen
     figuraDexter->setOffset(-19.5, -25); // Ajustamos la imagen respecto a la posicion fisica
     figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());//Le damos una posicion inicial a Dexter
+
+    // Creamos el panel de muestras botanicas
+    crearContadorMuestras();
 
     //Detalles de la vista grafica
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);//Desactiva el desplazamiento Horizontal
@@ -162,6 +166,12 @@ void VistaNivel1::actualizarJuego()
 
     figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());
     actualizarAnimacion(direccion);
+
+    // Actualizamos las muestras que aparecen en pantalla
+    actualizarMuestrasGraficas();
+
+    // Actualizamos el contador de muestras
+    actualizarContadorMuestras();
 }
 
 // Actualizamos la animacion y orientacion de Dexter
@@ -385,4 +395,145 @@ void VistaNivel1::mostrarFotograma(
             44.5 - imagen.width(), -25
             );
     }
+}
+
+// Sincronizamos las muestras graficas de los recolectables con la logica
+void VistaNivel1::actualizarMuestrasGraficas()
+{
+    // Consultamos las muestras sin copiar el vector
+    const vector<Recolectables*> &muestras =
+        nivel.getMuestras();
+
+    // Creamos figuras cuando aparecen nuevas muestras
+    while (figurasMuestras.size() < muestras.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(QPixmap());
+
+        figurasMuestras.push_back(figura);
+    }
+
+    // Eliminamos las figuras que ya no necesitamos
+    while (figurasMuestras.size() > muestras.size())
+    {
+        delete figurasMuestras.back();
+
+        figurasMuestras.pop_back();
+    }
+
+    // Actualizamos las muestras graficas
+    for (int i = 0; i < muestras.size(); i++)
+    {
+        // Actualizamos la posicion de la figura
+        figurasMuestras[i]->setPos(
+            muestras[i]->getX(),
+            muestras[i]->getY()
+            );
+
+        // Puntero al sprite correspondiente
+        const QPixmap *imagen;
+
+        // Seleccionamos la imagen especial
+        if (muestras[i]->esEspecial())
+        {
+            imagen = &spriteMuestraEspecial;
+        }
+
+        // Seleccionamos la variante de flor comun
+        else
+        {
+            imagen = &spritesMuestrasComunes[
+                muestras[i]->getVariante()
+            ];
+        }
+
+        // Cambiamos la imagen solamente si es necesario
+        if (figurasMuestras[i]->pixmap().cacheKey()
+            != imagen->cacheKey())
+        {
+            figurasMuestras[i]->setPixmap(*imagen);
+        }
+    }
+}
+
+// Cargamos las imagenes de las muestras botanicas
+void VistaNivel1::cargarSpritesMuestras()
+{
+    // Cargamos las cuatro variantes de flores comunes
+    cargarAnimacion(spritesMuestrasComunes,
+                    ":/sprites/objetos/comunes", 4);
+
+    // Cargamos la flor especial
+    spriteMuestraEspecial.load(
+        ":/sprites/objetos/especial/especial_00.png");
+
+    // Comprobamos que la imagen se cargo correctamente
+    if (spriteMuestraEspecial.isNull())
+    {
+        throw runtime_error(
+            "No se pudo cargar la muestra especial");
+    }
+    // Ajustamos las dimensiones de las flores comunes
+    for (int i = 0; i < spritesMuestrasComunes.size(); i++)
+    {
+        spritesMuestrasComunes[i] =
+            spritesMuestrasComunes[i].scaled(
+                40, 40, Qt::IgnoreAspectRatio,
+                Qt::FastTransformation);
+    }
+
+    // Ajustamos las dimensiones de la flor especial
+    spriteMuestraEspecial = spriteMuestraEspecial.scaled(
+        40, 40, Qt::IgnoreAspectRatio,
+        Qt::FastTransformation);
+}
+
+// Creamos el contador de muestras botanicas
+void VistaNivel1::crearContadorMuestras()
+{
+    // Inicializamos la ultima cantidad mostrada
+    muestrasMostradas = -1;
+
+    // Creamos el fondo del contador
+    escena->addRect(
+              20, 20, 245, 54,
+              QPen(QColor(140, 170, 112), 2),
+              QBrush(QColor(38, 59, 52))
+              )->setZValue(20);
+
+    // Creamos el texto del contador
+    textoMuestras = escena->addText("");
+
+    // Configuramos la fuente y el color
+    textoMuestras->setFont(
+        QFont("Consolas", 16, QFont::Bold));
+
+    textoMuestras->setDefaultTextColor(
+        QColor(255, 245, 217));
+
+    // Ubicamos el texto sobre el fondo
+    textoMuestras->setPos(30, 30);
+    textoMuestras->setZValue(21);
+
+    // Mostramos la cantidad inicial
+    actualizarContadorMuestras();
+}
+
+// Actualizamos la cantidad de muestras recolectadas
+void VistaNivel1::actualizarContadorMuestras()
+{
+    int cantidad = nivel.getMuestrasRecolectadas();
+
+    // Evitamos modificar el texto si nada ha cambiado
+    if (cantidad == muestrasMostradas)
+    {
+        return;
+    }
+
+    muestrasMostradas = cantidad;
+
+    // Mostramos las muestras recolectadas y el objetivo
+    textoMuestras->setPlainText(
+        "Muestras: " + QString::number(cantidad) + " / 20"
+        );
 }
