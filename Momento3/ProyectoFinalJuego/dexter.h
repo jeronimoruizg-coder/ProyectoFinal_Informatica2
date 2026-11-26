@@ -18,9 +18,13 @@ private:
     float tiempoRecoleccion;
     // Orientacion: 1 derecha, -1 izquierda
     int orientacion;
+
+    // Sistema de vidas y daño
+    int vidas;
+    float tiempoInvulnerabilidad;
 public:
     Dexter();
-    //nivel 2
+    //------------------------------------------------ nivel 1 ------------------------------------//
     void mover(int dirX, int dirY, Mapa &mapa);
 
     float getX();
@@ -50,6 +54,15 @@ public:
     // Dimensiones de la zona de captura
     int getRecoleccionAncho();
     int getRecoleccionAlto();
+
+    // Sistema de daño
+    void recibirDano();
+    void actualizarInvulnerabilidad(float intervaloTiempo);
+
+    // Consultas del estado de Dexter
+    int getVidas() const;
+    bool esInvulnerable() const;
+    bool debeTitilarRojo() const;
 };
 
 #endif // DEXTER_H

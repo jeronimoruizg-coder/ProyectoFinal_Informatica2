@@ -15,6 +15,9 @@ Dexter::Dexter()
     // Inicializamos el estado de recoleccion
     tiempoRecoleccion = 0;
     orientacion = 1;
+
+    vidas = 3;
+    tiempoInvulnerabilidad = 0;
 }
 
 void Dexter::mover(int dirX, int dirY, Mapa &mapa)
@@ -67,6 +70,9 @@ void Dexter::iniciarNivel1() //Modificamos los atributos de dexter para el nivel
     // Inicializamos el estado de recoleccion
     tiempoRecoleccion = 0;
     orientacion = 1;
+    //Inicializamos las vidas
+    vidas = 3;
+    tiempoInvulnerabilidad = 0;
 }
 
 void Dexter::desplazarse(int direccion, float intervaloTiempo)
@@ -189,4 +195,63 @@ int Dexter::getRecoleccionAlto()
     // Tambien reducimos la altura
     // para que no quede tan exagerada
     return 60;
+}
+
+
+// Aplicamos daño a Dexter
+void Dexter::recibirDano()
+{
+    // No recibe daño si es invulnerable
+    // o si ya no tiene vidas
+    if (esInvulnerable() || vidas <= 0)
+    {
+        return;
+    }
+
+    // Perdemos una vida
+    vidas--;
+
+    // Activamos dos segundos de invulnerabilidad
+    tiempoInvulnerabilidad = 2;
+}
+
+// Actualizamos el tiempo de invulnerabilidad
+void Dexter::actualizarInvulnerabilidad(float intervaloTiempo)
+{
+    if (tiempoInvulnerabilidad > 0)
+    {
+        tiempoInvulnerabilidad -= intervaloTiempo;
+
+        // Evitamos valores negativos
+        if (tiempoInvulnerabilidad < 0)
+        {
+            tiempoInvulnerabilidad = 0;
+        }
+    }
+}
+
+// Consultamos las vidas restantes
+int Dexter::getVidas() const
+{
+    return vidas;
+}
+
+// Comprobamos si Dexter es invulnerable
+bool Dexter::esInvulnerable() const
+{
+    return tiempoInvulnerabilidad > 0;
+}
+
+// Determinamos cuando Dexter debe verse rojo
+bool Dexter::debeTitilarRojo() const
+{
+    if (!esInvulnerable())
+    {
+        return false;
+    }
+
+    int intervalo = int(
+        (2 - tiempoInvulnerabilidad) / 0.15);
+
+    return intervalo % 2 == 0;
 }

@@ -1,28 +1,28 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <RCC>
-  <qresource prefix="/">
-    <file>sprites/dexter/caminata/caminata_00.png</file>
-    <file>sprites/dexter/caminata/caminata_01.png</file>
-    <file>sprites/dexter/caminata/caminata_02.png</file>
-    <file>sprites/dexter/caminata/caminata_03.png</file>
-    <file>sprites/dexter/caminata/caminata_04.png</file>
-    <file>sprites/dexter/caminata/caminata_05.png</file>
-    <file>sprites/dexter/dano/dano_00.png</file>
-    <file>sprites/dexter/dano/dano_01.png</file>
-    <file>sprites/dexter/dano/dano_02.png</file>
-    <file>sprites/dexter/dano/dano_03.png</file>
-    <file>sprites/dexter/recoleccion/recoleccion_00.png</file>
-    <file>sprites/dexter/recoleccion/recoleccion_01.png</file>
-    <file>sprites/dexter/recoleccion/recoleccion_02.png</file>
-    <file>sprites/dexter/recoleccion/recoleccion_03.png</file>
-    <file>sprites/dexter/recoleccion/recoleccion_04.png</file>
-    <file>sprites/dexter/reposo/reposo_00.png</file>
-    <file>sprites/dexter/reposo/reposo_01.png</file>
-    <file>sprites/dexter/reposo/reposo_02.png</file>
-    <file>sprites/dexter/reposo/reposo_03.png</file>
-    <file>sprites/dexter/salto/salto_00.png</file>
-    <file>sprites/dexter/salto/salto_01.png</file>
-    <file>sprites/dexter/salto/salto_02.png</file>
-    <file>sprites/dexter/salto/salto_03.png</file>
-  </qresource>
+    <qresource prefix="/">
+        <file>sprites/dexter/caminata/caminata_00.png</file>
+        <file>sprites/dexter/caminata/caminata_01.png</file>
+        <file>sprites/dexter/caminata/caminata_02.png</file>
+        <file>sprites/dexter/caminata/caminata_03.png</file>
+        <file>sprites/dexter/caminata/caminata_04.png</file>
+        <file>sprites/dexter/caminata/caminata_05.png</file>
+        <file>sprites/dexter/dano/dano_00.png</file>
+        <file>sprites/dexter/dano/dano_01.png</file>
+        <file>sprites/dexter/dano/dano_02.png</file>
+        <file>sprites/dexter/dano/dano_03.png</file>
+        <file>sprites/dexter/recoleccion/recoleccion_00.png</file>
+        <file>sprites/dexter/recoleccion/recoleccion_01.png</file>
+        <file>sprites/dexter/recoleccion/recoleccion_02.png</file>
+        <file>sprites/dexter/recoleccion/recoleccion_03.png</file>
+        <file>sprites/dexter/recoleccion/recoleccion_04.png</file>
+        <file>sprites/dexter/reposo/reposo_00.png</file>
+        <file>sprites/dexter/reposo/reposo_01.png</file>
+        <file>sprites/dexter/reposo/reposo_02.png</file>
+        <file>sprites/dexter/reposo/reposo_03.png</file>
+        <file>sprites/dexter/salto/salto_00.png</file>
+        <file>sprites/dexter/salto/salto_01.png</file>
+        <file>sprites/dexter/salto/salto_02.png</file>
+        <file>sprites/dexter/salto/salto_03.png</file>
+        <file>sprites/dexter/muerte/dexter_muerte_00.png</file>
+    </qresource>
 </RCC>
