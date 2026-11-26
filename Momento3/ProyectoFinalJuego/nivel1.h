@@ -19,6 +19,9 @@ class Nivel1
 private:
     Dexter dexter;
 
+    // Tiempo restante de la partida
+    float tiempoRestante;
+
     // Almacenamos las muestras activas
     vector<Recolectables*> muestras;
 
@@ -105,7 +108,7 @@ private:
     bool debeLanzarExcremento(Guacamaya *guacamaya);
 
 public:
-    Nivel1();
+    Nivel1(bool dificultad = false);
     ~Nivel1();
 
     void recolectar();
@@ -138,6 +141,11 @@ public:
 
     //Consulta Excrementos
     const vector<Excremento*>& getExcrementos() const;
+
+    //Tiempo de partida y condicion de victoria o derrota
+    int getTiempoRestante() const;
+    bool haGanado() const;
+    bool haPerdido() const;
 };
 
 #endif // NIVEL1_H

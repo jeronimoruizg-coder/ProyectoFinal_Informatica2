@@ -59,6 +59,8 @@ private:
     vector<QGraphicsPixmapItem*> figurasMuestras;
     // Texto que muestra la cantidad recolectada
     QGraphicsTextItem *textoMuestras;
+    //Texto de tiempo restante
+    QGraphicsTextItem *textoTiempo;
     // Ultima cantidad mostrada en pantalla
     int muestrasMostradas;
     // Funciones para administrar el contador
@@ -174,10 +176,18 @@ private:
     void cargarSpritesExcrementos();
     void actualizarExcrementosGraficos();
 
+    // Estado de pausa
+    bool partidaPausada;
 
+    // Elementos graficos de la pausa
+    QGraphicsRectItem *fondoPausa;
+    QGraphicsTextItem *textoPausa;
+
+    // Control de la pausa
+    void alternarPausa();
 
 public:
-    VistaNivel1();
+    VistaNivel1(bool dificultad = false);
 
 protected:
     void keyPressEvent(QKeyEvent *evento);

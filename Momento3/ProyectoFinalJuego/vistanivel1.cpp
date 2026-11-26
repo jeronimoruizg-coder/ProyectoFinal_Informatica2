@@ -11,9 +11,10 @@
 #include <QStringList>
 #include <QDebug>
 
-VistaNivel1::VistaNivel1() {
-
+VistaNivel1::VistaNivel1(bool dificultad): nivel(dificultad)
+{
     partidaTerminada = false;
+    partidaPausada = false;
 
     //Manejo de la interaccion con teclado
     izquierdaPresionada = false;
@@ -89,8 +90,15 @@ VistaNivel1::VistaNivel1() {
     // Inicialmente permanece desactivado
     efectoDano->setEnabled(false);
 
-    // Creamos el panel de Flores recolectadas
+    // Creamos el contador de Flores recolectadas
     crearContadorMuestras();
+
+    // Creamos el contador de tiempo
+    textoTiempo = escena->addText("Tiempo: 90 s");
+    textoTiempo->setDefaultTextColor(Qt::white);
+    textoTiempo->setFont(QFont("Arial", 18, QFont::Bold));
+    textoTiempo->setPos(550, 15);
+    textoTiempo->setZValue(20);
 
     //Creamos el contador de vidas
     crearContadorVidas();
@@ -100,6 +108,26 @@ VistaNivel1::VistaNivel1() {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);// Desactiva el desplazamiento Vertical
     setFrameShape(QFrame::NoFrame);// Elimina el borde que Qt coloca alrededor de la vista.
     setFixedSize(1280, 720);// Le damos el tamaño fijo a nuestra Vista grafica, lo que se va a ver al final
+
+    // Creamos el fondo de pausa
+    fondoPausa = escena->addRect(
+        340, 260, 600, 180,
+        QPen(QColor(140, 170, 112), 3),
+        QBrush(QColor(38, 59, 52))
+        );
+    fondoPausa->setZValue(30);
+    fondoPausa->hide();
+    // Creamos el mensaje de pausa
+    textoPausa = escena->addText(
+        "PARTIDA PAUSADA\nESC para continuar");
+    textoPausa->setFont(
+        QFont("Consolas", 24, QFont::Bold));
+    textoPausa->setDefaultTextColor(
+        QColor(255, 245, 217));
+    // Centramos el mensaje
+    textoPausa->setPos((1280 - textoPausa->boundingRect().width()) / 2, (700 - textoPausa->boundingRect().height()) / 2);
+    textoPausa->setZValue(31);
+    textoPausa->hide();
 
     // Creamos el temporizador
     temporizador = new QTimer(this);
@@ -134,6 +162,19 @@ void VistaNivel1::keyPressEvent(QKeyEvent *evento)
 
     // Ignoramos las repeticiones automaticas del teclado
     if (evento->isAutoRepeat())
+    {
+        return;
+    }
+
+    // Pausamos o reanudamos con Escape
+    if (evento->key() == Qt::Key_Escape)
+    {
+        alternarPausa();
+        return;
+    }
+
+    // Impedimos acciones durante la pausa
+    if (partidaPausada || partidaTerminada)
     {
         return;
     }
@@ -246,6 +287,17 @@ void VistaNivel1::actualizarJuego()
     // Actualizamos el contador de muestras
     actualizarContadorMuestras();
 
+    // Actualizamos el tiempo restante
+    QString nuevoTiempo = "Tiempo: "
+                          + QString::number(nivel.getTiempoRestante())
+                          + " s";
+
+    // Solo modificamos el texto cuando cambia
+    if (textoTiempo->toPlainText() != nuevoTiempo)
+    {
+        textoTiempo->setPlainText(nuevoTiempo);
+    }
+
     // Actualizamos el contador de vidas
     actualizarContadorVidas();
 
@@ -263,7 +315,7 @@ void VistaNivel1::actualizarJuego()
     actualizarExcrementosGraficos();
 
     // Comprobamos si Dexter ha perdido
-    if (nivel.getDexter().getVidas() <= 0)
+    if (nivel.haGanado() || nivel.haPerdido())
     {
         finalizarPartida();
     }
@@ -806,50 +858,70 @@ void VistaNivel1::finalizarPartida()
     // Desactivamos el parpadeo rojo
     efectoDano->setEnabled(false);
 
-    // Cambiamos el sprite de Dexter
-    figuraDexter->setPixmap(spriteMuerte);
-
-    // Eliminamos el desplazamiento de los sprites anteriores
-    figuraDexter->setOffset(0, 0);
-
-    // Calculamos las dimensiones graficas
-    float anchoSprite =
-        spriteMuerte.width() * figuraDexter->scale();
-
-    float altoSprite =
-        spriteMuerte.height() * figuraDexter->scale();
-
-    // Centramos el sprite respecto al cuerpo de Dexter
-    float posicionX =
-        nivel.getDexter().getX() +
-        nivel.getDexter().getAncho() / 2.0 -
-        anchoSprite / 2;
-
-    // Evitamos que quede fuera del escenario
-    if (posicionX < 0)
+    // Mostramos el sprite de muerte solamente
+    // cuando Dexter pierde todas sus vidas
+    if (nivel.getDexter().getVidas() <= 0)
     {
-        posicionX = 0;
+        figuraDexter->setPixmap(spriteMuerte);
+
+        // Eliminamos el desplazamiento anterior
+        figuraDexter->setOffset(0, 0);
+
+        // Calculamos las dimensiones graficas
+        float anchoSprite =
+            spriteMuerte.width() * figuraDexter->scale();
+
+        float altoSprite =
+            spriteMuerte.height() * figuraDexter->scale();
+
+        // Centramos el sprite respecto al cuerpo de Dexter
+        float posicionX =
+            nivel.getDexter().getX() +
+            nivel.getDexter().getAncho() / 2.0 -
+            anchoSprite / 2;
+
+        // Evitamos que quede fuera del escenario
+        if (posicionX < 0)
+        {
+            posicionX = 0;
+        }
+
+        if (posicionX + anchoSprite > 1280)
+        {
+            posicionX = 1280 - anchoSprite;
+        }
+
+        // Colocamos a Dexter acostado sobre el suelo
+        figuraDexter->setPos(
+            posicionX, 650 - altoSprite);
     }
 
-    if (posicionX + anchoSprite > 1280)
-    {
-        posicionX = 1280 - anchoSprite;
-    }
-
-    // Colocamos a Dexter acostado sobre el suelo
-    figuraDexter->setPos(
-        posicionX, 650 - altoSprite);
-
-    // Fondo del mensaje de derrota
+    // Fondo del mensaje de finalizacion
     escena->addRect(
               340, 260, 600, 180,
               QPen(QColor(140, 170, 112), 3),
               QBrush(QColor(38, 59, 52))
               )->setZValue(30);
 
-    // Mensaje de derrota
+    // Determinamos el resultado de la partida
+    QString resultado;
+
+    if (nivel.haGanado())
+    {
+        resultado = "¡VICTORIA!";
+    }
+    else if (nivel.getDexter().getVidas() <= 0)
+    {
+        resultado = "¡HAS PERDIDO!";
+    }
+    else
+    {
+        resultado = "¡TIEMPO AGOTADO!";
+    }
+
+    // Creamos el mensaje de finalizacion
     QGraphicsTextItem *mensaje =
-        escena->addText("¡PARTIDA TERMINADA!");
+        escena->addText(resultado);
 
     mensaje->setFont(
         QFont("Consolas", 28, QFont::Bold));
@@ -857,7 +929,7 @@ void VistaNivel1::finalizarPartida()
     mensaje->setDefaultTextColor(
         QColor(255, 245, 217));
 
-    // Centramos el mensaje en el escenario
+    // Centramos el mensaje
     mensaje->setPos(
         (1280 - mensaje->boundingRect().width()) / 2,
         (700 - mensaje->boundingRect().height()) / 2
@@ -1390,5 +1462,35 @@ void VistaNivel1::actualizarExcrementosGraficos()
         figurasExcrementos[i]->setPos(
             excrementos[i]->getX(),
             excrementos[i]->getY());
+    }
+}
+
+void VistaNivel1::alternarPausa()
+{
+    // No podemos pausar una partida finalizada
+    if (partidaTerminada)
+    {
+        return;
+    }
+
+    // Cambiamos el estado de pausa
+    partidaPausada = !partidaPausada;
+
+    if (partidaPausada)
+    {
+        // Detenemos todas las actualizaciones
+        temporizador->stop();
+
+        fondoPausa->show();
+        textoPausa->show();
+    }
+    else
+    {
+        // Ocultamos el mensaje
+        fondoPausa->hide();
+        textoPausa->hide();
+
+        // Reanudamos las actualizaciones
+        temporizador->start();
     }
 }

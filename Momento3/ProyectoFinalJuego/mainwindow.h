@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QComboBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,5 +20,13 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    // Selectores del menu
+    QComboBox *selectorNivel;
+    QComboBox *selectorDificultad;
+
+    // Funciones de navegacion
+    void mostrarMenuPrincipal();
+    void iniciarNivel1(bool dificultad);
+    void jugar();
 };
 #endif // MAINWINDOW_H
