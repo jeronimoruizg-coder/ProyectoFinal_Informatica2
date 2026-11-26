@@ -18,6 +18,7 @@ Dexter::Dexter()
 
     vidas = 3;
     tiempoInvulnerabilidad = 0;
+    tiempoSuero = 0;
 }
 
 void Dexter::mover(int dirX, int dirY, Mapa &mapa)
@@ -73,6 +74,7 @@ void Dexter::iniciarNivel1() //Modificamos los atributos de dexter para el nivel
     //Inicializamos las vidas
     vidas = 3;
     tiempoInvulnerabilidad = 0;
+    tiempoSuero = 0;
 }
 
 void Dexter::desplazarse(int direccion, float intervaloTiempo)
@@ -254,4 +256,44 @@ bool Dexter::debeTitilarRojo() const
         (2 - tiempoInvulnerabilidad) / 0.15);
 
     return intervalo % 2 == 0;
+}
+
+// Recuperamos una vida sin superar el maximo
+void Dexter::recuperarVida()
+{
+    if (vidas > 0 && vidas < 3)
+    {
+        vidas++;
+    }
+}
+
+// Activamos el aumento temporal de velocidad
+void Dexter::activarSuero()
+{
+    velocidad = 450;
+
+    tiempoSuero = 8;
+}
+
+// Actualizamos la duracion del suero
+void Dexter::actualizarSuero(float intervaloTiempo)
+{
+    if (tiempoSuero > 0)
+    {
+        tiempoSuero -= intervaloTiempo;
+
+        // Si termina el efecto, restauramos la velocidad
+        if (tiempoSuero <= 0)
+        {
+            tiempoSuero = 0;
+
+            velocidad = 300;
+        }
+    }
+}
+
+// Consultamos si el efecto sigue activo
+bool Dexter::tieneSuero() const
+{
+    return tiempoSuero > 0;
 }

@@ -19,6 +19,10 @@ Nivel1::Nivel1()
 
     //Semillas
     tiempoGeneracionSemillas = 0;
+
+    //Tiempo de generacion de beneficios
+    tiempoGeneracionMedicinal = 0;
+    tiempoGeneracionSuero = 0;
 }
 
 
@@ -39,6 +43,14 @@ Nivel1::~Nivel1()
     }
 
     semillas.clear();
+
+    // Liberamos los beneficios restantes
+    for (int i = 0; i < beneficios.size(); i++)
+    {
+        delete beneficios[i];
+    }
+
+    beneficios.clear();
 }
 
 // Actualizamos la logica del nivel
@@ -48,6 +60,7 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
     dexter.aplicarGravedad(intervaloTiempo);
     dexter.actualizarRecoleccion(intervaloTiempo);
     dexter.actualizarInvulnerabilidad(intervaloTiempo);
+    dexter.actualizarSuero(intervaloTiempo);
 
     // Acumulamos el tiempo para generar nuevas muestras
     tiempoGeneracion += intervaloTiempo;
@@ -61,6 +74,7 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
 
     actualizarMuestras(intervaloTiempo);
     actualizarSemillas(intervaloTiempo);
+    actualizarBeneficios(intervaloTiempo);
 }
 
 // Solicitamos a Dexter saltar
@@ -255,3 +269,82 @@ const vector<SemillaExplosiva*>& Nivel1::getSemillas() const
     return semillas;
 }
 
+// Generamos un beneficio en una posicion aleatoria
+void Nivel1::generarBeneficio(int tipo)
+{
+    int posicionX = rand() % 1241;
+
+    Beneficios *beneficio =
+        new Beneficios(posicionX, tipo);
+
+    beneficios.push_back(beneficio);
+}
+
+// Eliminamos el beneficio y liberamos su memoria
+void Nivel1::eliminarBeneficio(int indice)
+{
+    delete beneficios[indice];
+
+    beneficios.erase(beneficios.begin() + indice);
+}
+
+void Nivel1::actualizarBeneficios(float intervaloTiempo)
+{
+    // Acumulamos los tiempos de generacion
+    tiempoGeneracionMedicinal += intervaloTiempo;
+    tiempoGeneracionSuero += intervaloTiempo;
+
+    // Generamos una planta medicinal cada 15 segundos
+    if (tiempoGeneracionMedicinal >= 15)
+    {
+        generarBeneficio(0);
+
+        tiempoGeneracionMedicinal -= 15;
+    }
+
+    // Generamos un suero cada 10 segundos
+    if (tiempoGeneracionSuero >= 10)
+    {
+        generarBeneficio(1);
+
+        tiempoGeneracionSuero -= 10;
+    }
+
+    int i = 0;
+
+    while (i < beneficios.size())
+    {
+        beneficios[i]->actualizar(intervaloTiempo);
+
+        // Si toca el suelo, desaparece
+        if (beneficios[i]->llegoAlSuelo())
+        {
+            eliminarBeneficio(i);
+        }
+
+        // Si Dexter lo atrapa, aplicamos el beneficio
+        else if (detectarRecoleccion(beneficios[i]))
+        {
+            if (beneficios[i]->getTipo() == 0)
+            {
+                dexter.recuperarVida();
+            }
+            else
+            {
+                dexter.activarSuero();
+            }
+
+            eliminarBeneficio(i);
+        }
+
+        else
+        {
+            i++;
+        }
+    }
+}
+
+const vector<Beneficios*>& Nivel1::getBeneficios() const
+{
+    return beneficios;
+}

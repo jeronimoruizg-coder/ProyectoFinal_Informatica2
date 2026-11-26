@@ -22,6 +22,9 @@ private:
     // Sistema de vidas y daño
     int vidas;
     float tiempoInvulnerabilidad;
+
+    // Tiempo restante del efecto del suero
+    float tiempoSuero;
 public:
     Dexter();
     //------------------------------------------------ nivel 1 ------------------------------------//
@@ -63,6 +66,12 @@ public:
     int getVidas() const;
     bool esInvulnerable() const;
     bool debeTitilarRojo() const;
+
+    // Beneficios para Dexter
+    void recuperarVida();
+    void activarSuero();
+    void actualizarSuero(float intervaloTiempo);
+    bool tieneSuero() const;
 };
 
 #endif // DEXTER_H
