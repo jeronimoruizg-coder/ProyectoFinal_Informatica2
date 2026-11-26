@@ -20,6 +20,7 @@ set(PROJECT_SOURCES
         DexterNivel1.qrc
         objetos.qrc
         enemigos.qrc
+        guacamaya.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -41,6 +42,8 @@ qt_add_executable(ProyectoFinalJuego
         beneficios.h beneficios.cpp
         hormiga.h hormiga.cpp
         jabali.h jabali.cpp
+        guacamaya.h guacamaya.cpp
+        excremento.h excremento.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

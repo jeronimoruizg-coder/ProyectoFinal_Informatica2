@@ -48,6 +48,8 @@ VistaNivel1::VistaNivel1() {
         cargarSpritesBeneficios();
         cargarSpritesHormiga();
         cargarSpritesJabali();
+        cargarSpritesGuacamaya();
+        cargarSpritesExcrementos();
     }
     catch (const runtime_error &error)
     {
@@ -109,12 +111,16 @@ VistaNivel1::VistaNivel1() {
     fotogramaHormiga = 0;
     tiempoAnimacionHormiga = 0;
 
-     // inicializamos los fotogramas de jabali y advertencia
+    // inicializamos los fotogramas de jabali y advertencia
     fotogramaJabali = 0;
     tiempoAnimacionJabali = 0;
 
     fotogramaAdvertencia = 0;
     tiempoAnimacionAdvertencia = 0;
+
+    // inicializamos los fotogramas de Guacamaya
+    fotogramaGuacamaya = 0;
+    tiempoAnimacionGuacamaya = 0;
 
 }
 
@@ -249,6 +255,12 @@ void VistaNivel1::actualizarJuego()
     //Actualizamos los jabalis y advertencias que aparecen en la pantalla
     actualizarJabalisGraficos();
     actualizarAdvertenciaJabali();
+
+    //Actualizamos la Guacamaya que aparece en la pantalla
+    actualizarGuacamayasGraficas();
+
+    //Actualizamos el escremento que aparece en la pantalla
+    actualizarExcrementosGraficos();
 
     // Comprobamos si Dexter ha perdido
     if (nivel.getDexter().getVidas() <= 0)
@@ -1209,3 +1221,174 @@ void VistaNivel1::actualizarAdvertenciaJabali()
     figuraAdvertencia->show();
 }
 
+
+void VistaNivel1::cargarSpritesGuacamaya()
+{
+    cargarAnimacion(
+        spritesGuacamaya,
+        ":/sprites/enemigos/guacamaya", 7);
+
+    for (int i = 0; i < spritesGuacamaya.size(); i++)
+    {
+        spritesGuacamaya[i] =
+            spritesGuacamaya[i].scaled(
+                100, 70,
+                Qt::IgnoreAspectRatio,
+                Qt::FastTransformation);
+    }
+}
+
+void VistaNivel1::actualizarGuacamayasGraficas()
+{
+    const vector<Guacamaya*>& guacamayas =
+        nivel.getGuacamayas();
+
+    // Creamos las figuras necesarias
+    while (figurasGuacamayas.size() < guacamayas.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(spritesGuacamaya[0]);
+
+        figurasGuacamayas.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasGuacamayas.size() > guacamayas.size())
+    {
+        delete figurasGuacamayas.back();
+
+        figurasGuacamayas.pop_back();
+    }
+
+    // Evitamos procesar animaciones innecesarias
+    if (guacamayas.empty())
+    {
+        return;
+    }
+
+    // Actualizamos el fotograma de vuelo
+    tiempoAnimacionGuacamaya += 16;
+
+    if (tiempoAnimacionGuacamaya >= 90)
+    {
+        tiempoAnimacionGuacamaya -= 90;
+
+        fotogramaGuacamaya++;
+
+        if (fotogramaGuacamaya >= spritesGuacamaya.size())
+        {
+            fotogramaGuacamaya = 0;
+        }
+    }
+
+    const QPixmap &imagen =
+        spritesGuacamaya[fotogramaGuacamaya];
+
+    for (int i = 0; i < guacamayas.size(); i++)
+    {
+        // Actualizamos la imagen solo si cambia
+        if (figurasGuacamayas[i]->pixmap().cacheKey()
+            != imagen.cacheKey())
+        {
+            figurasGuacamayas[i]->setPixmap(imagen);
+        }
+
+        // Determinamos la orientacion
+        QTransform transformacion;
+
+        if (guacamayas[i]->getDireccion() == -1)
+        {
+            transformacion.translate(imagen.width(), 0);
+
+            transformacion.scale(-1, 1);
+        }
+
+        // Evitamos transformaciones innecesarias
+        if (figurasGuacamayas[i]->transform()
+            != transformacion)
+        {
+            figurasGuacamayas[i]->setTransform(
+                transformacion);
+        }
+
+        // Actualizamos la posicion
+        figurasGuacamayas[i]->setPos(
+            guacamayas[i]->getX(),
+            guacamayas[i]->getY());
+    }
+}
+
+
+void VistaNivel1::cargarSpritesExcrementos()
+{
+    spriteExcrementoCaida.load(
+        ":/sprites/objetos/excremento/excremento_caida_00.png");
+
+    spriteExcrementoSuelo.load(
+        ":/sprites/objetos/excremento/excremento_suelo_00.png");
+
+    if (spriteExcrementoCaida.isNull() ||
+        spriteExcrementoSuelo.isNull())
+    {
+        throw runtime_error(
+            "No se pudieron cargar los excrementos");
+    }
+
+    spriteExcrementoCaida =
+        spriteExcrementoCaida.scaled(
+            25, 30,
+            Qt::IgnoreAspectRatio,
+            Qt::FastTransformation);
+
+    spriteExcrementoSuelo =
+        spriteExcrementoSuelo.scaled(
+            45, 15,
+            Qt::IgnoreAspectRatio,
+            Qt::FastTransformation);
+}
+
+void VistaNivel1::actualizarExcrementosGraficos()
+{
+    const vector<Excremento*>& excrementos =
+        nivel.getExcrementos();
+
+    // Creamos las figuras necesarias
+    while (figurasExcrementos.size() < excrementos.size())
+    {
+        QGraphicsPixmapItem *figura =
+            escena->addPixmap(spriteExcrementoCaida);
+
+        figurasExcrementos.push_back(figura);
+    }
+
+    // Eliminamos las figuras sobrantes
+    while (figurasExcrementos.size() > excrementos.size())
+    {
+        delete figurasExcrementos.back();
+
+        figurasExcrementos.pop_back();
+    }
+
+    for (int i = 0; i < excrementos.size(); i++)
+    {
+        const QPixmap *imagen = &spriteExcrementoCaida;
+
+        // Seleccionamos el sprite correspondiente
+        if (excrementos[i]->estaEnSuelo())
+        {
+            imagen = &spriteExcrementoSuelo;
+        }
+
+        // Cambiamos la imagen solo cuando sea necesario
+        if (figurasExcrementos[i]->pixmap().cacheKey()
+            != imagen->cacheKey())
+        {
+            figurasExcrementos[i]->setPixmap(*imagen);
+        }
+
+        // Actualizamos la posicion
+        figurasExcrementos[i]->setPos(
+            excrementos[i]->getX(),
+            excrementos[i]->getY());
+    }
+}

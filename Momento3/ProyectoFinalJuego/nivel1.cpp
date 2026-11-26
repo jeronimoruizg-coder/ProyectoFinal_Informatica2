@@ -1,18 +1,22 @@
 #include "nivel1.h"
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 using namespace std;
 
-Nivel1::Nivel1()
+Nivel1::Nivel1(): inteligenciaGuacamaya(3)
 {
     dexter.iniciarNivel1();
+
+    posicionAnteriorDexter = dexter.getX();
+    velocidadHorizontalDexter = 0;
 
     muestrasRecolectadas = 0;
     tiempoGeneracion = 0;
 
     // iniciamos en dificultad normal
-    dificil = false;
+    dificil = true;
 
     // Inicializamos la generacion de numeros aleatorios
     srand(time(0));
@@ -29,6 +33,7 @@ Nivel1::Nivel1()
     tiempoGeneracionJabali = 0;
     tiempoAdvertenciaJabali = 0;
     direccionJabali = 1;
+    tiempoGeneracionGuacamaya = 0;
 }
 
 
@@ -73,16 +78,40 @@ Nivel1::~Nivel1()
     }
 
     jabalis.clear();
+
+    // Liberamos Guacamayas restantes
+    for (int i = 0; i < guacamayas.size(); i++)
+    {
+        delete guacamayas[i];
+    }
+
+    guacamayas.clear();
+
+
+    for (int i = 0; i < excrementos.size(); i++)
+    {
+        delete excrementos[i];
+    }
+
+    excrementos.clear();
 }
 
 // Actualizamos la logica del nivel
 void Nivel1::actualizar(int direccion, float intervaloTiempo)
 {
     dexter.desplazarse(direccion, intervaloTiempo);
+    // Calculamos la velocidad horizontal real de Dexter
+    velocidadHorizontalDexter =
+        (dexter.getX() - posicionAnteriorDexter)
+        / intervaloTiempo;
+
+    // Guardamos la posicion para la siguiente actualizacion
+    posicionAnteriorDexter = dexter.getX();
     dexter.aplicarGravedad(intervaloTiempo);
     dexter.actualizarRecoleccion(intervaloTiempo);
     dexter.actualizarInvulnerabilidad(intervaloTiempo);
     dexter.actualizarSuero(intervaloTiempo);
+    dexter.actualizarRalentizacion(intervaloTiempo);
 
     // Acumulamos el tiempo para generar nuevas muestras
     tiempoGeneracion += intervaloTiempo;
@@ -99,6 +128,8 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
     actualizarBeneficios(intervaloTiempo);
     actualizarHormigas(intervaloTiempo);
     actualizarJabalis(intervaloTiempo);
+    actualizarGuacamayas(intervaloTiempo);
+    actualizarExcrementos(intervaloTiempo);
 }
 
 // Solicitamos a Dexter saltar
@@ -554,4 +585,232 @@ bool Nivel1::hayAdvertenciaJabali() const
 int Nivel1::getDireccionJabali() const
 {
     return direccionJabali;
+}
+
+
+void Nivel1::generarGuacamaya()
+{
+    int sentido = 1;
+
+    if (rand() % 2 == 0)
+    {
+        sentido = -1;
+    }
+
+    Guacamaya *guacamaya = new Guacamaya(sentido);
+
+    // Seleccionamos una estrategia en dificultad dificil
+    if (dificil)
+    {
+        guacamaya->asignarEstrategia(
+            inteligenciaGuacamaya.elegirOpcion());
+    }
+    guacamayas.push_back(guacamaya);
+}
+
+void Nivel1::eliminarGuacamaya(int indice)
+{
+    delete guacamayas[indice];
+
+    guacamayas.erase(guacamayas.begin() + indice);
+}
+
+void Nivel1::actualizarGuacamayas(float intervaloTiempo)
+{
+    tiempoGeneracionGuacamaya += intervaloTiempo;
+
+    int frecuencia = 12;
+
+    if (dificil)
+    {
+        frecuencia = 8;
+    }
+
+    // Generamos una nueva guacamaya
+    if (tiempoGeneracionGuacamaya >= frecuencia)
+    {
+        generarGuacamaya();
+
+        tiempoGeneracionGuacamaya -= frecuencia;
+    }
+
+    int i = 0;
+
+    while (i < guacamayas.size())
+    {
+        guacamayas[i]->moverse(intervaloTiempo);
+
+        // Liberamos la memoria cuando sale
+        if (guacamayas[i]->salioDelEscenario())
+        {
+            eliminarGuacamaya(i);
+        }
+        else
+        {
+            // Comprobamos si todavia puede lanzar
+            if (!guacamayas[i]->haLanzadoExcremento())
+            {
+                // Solo lanzamos cuando esta dentro del escenario
+                if (guacamayas[i]->getX() >= 0 &&
+                    guacamayas[i]->getX() +
+                            guacamayas[i]->getAncho() <= 1280)
+                {
+                    // Probabilidad de lanzamiento
+                    if (dificil)
+                    {
+                        // Lanzamiento mediante prediccion
+                        if (debeLanzarExcremento(guacamayas[i]))
+                        {
+                            generarExcremento(guacamayas[i]);
+                        }
+                    }
+                    else
+                    {
+                        // Lanzamiento aleatorio en dificultad normal
+                        if (rand() % 180 == 0)
+                        {
+                            generarExcremento(guacamayas[i]);
+                        }
+                    }
+                }
+            }
+
+            i++;
+        }
+    }
+}
+
+const vector<Guacamaya*>& Nivel1::getGuacamayas() const
+{
+    return guacamayas;
+}
+
+
+void Nivel1::generarExcremento(Guacamaya *guacamaya)
+{
+    // Centramos el excremento debajo de la guacamaya
+    float posicionX = guacamaya->getX()
+                      + guacamaya->getAncho() / 2.0
+                      - 12.5;
+
+    float posicionY = guacamaya->getY()
+                      + guacamaya->getAlto();
+
+    Excremento *excremento = new Excremento(posicionX, posicionY, guacamaya->getEstrategia());
+
+    excrementos.push_back(excremento);
+
+    // Evitamos que la misma guacamaya vuelva a lanzar
+    guacamaya->registrarLanzamiento();
+}
+
+void Nivel1::eliminarExcremento(int indice)
+{
+    delete excrementos[indice];
+
+    excrementos.erase(excrementos.begin() + indice);
+}
+
+
+bool Nivel1::detectarContactoExcremento(
+    Excremento *excremento)
+{
+    return
+        dexter.getX() <
+            excremento->getX() + excremento->getAncho()
+
+        && dexter.getX() + dexter.getAncho() >
+               excremento->getX()
+
+        && dexter.getY() <
+               excremento->getY() + excremento->getAlto()
+
+        && dexter.getY() + dexter.getAlto() >
+               excremento->getY();
+}
+
+
+void Nivel1::actualizarExcrementos(float intervaloTiempo)
+{
+    int i = 0;
+
+    while (i < excrementos.size())
+    {
+        excrementos[i]->actualizar(intervaloTiempo);
+
+        int estrategia = excrementos[i]->getEstrategia();
+
+        // El excremento desaparece sin tocar a Dexter
+        if (excrementos[i]->debeDesaparecer())
+        {
+            if (estrategia != -1)
+            {
+                inteligenciaGuacamaya.registrarResultado(
+                    estrategia, false);
+            }
+
+            eliminarExcremento(i);
+        }
+
+        // El excremento toca a Dexter
+        else if (detectarContactoExcremento(excrementos[i]))
+        {
+            if (estrategia != -1)
+            {
+                inteligenciaGuacamaya.registrarResultado(
+                    estrategia, true);
+            }
+
+            dexter.ralentizar();
+
+            eliminarExcremento(i);
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
+const vector<Excremento*>& Nivel1::getExcrementos() const
+{
+    return excrementos;
+}
+
+
+bool Nivel1::debeLanzarExcremento(Guacamaya *guacamaya)
+{
+    // Centro horizontal de la guacamaya
+    float centroGuacamaya =
+        guacamaya->getX() + guacamaya->getAncho() / 2.0;
+
+    // Centro horizontal de Dexter
+    float objetivo =
+        dexter.getX() + dexter.getAncho() / 2.0;
+
+    // Estrategia de anticipacion de medio segundo
+    if (guacamaya->getEstrategia() == 1)
+    {
+        objetivo += velocidadHorizontalDexter * 0.5;
+    }
+
+    // Estrategia de anticipacion de un segundo
+    else if (guacamaya->getEstrategia() == 2)
+    {
+        objetivo += velocidadHorizontalDexter;
+    }
+
+    // Mantenemos el objetivo dentro del alcance de vuelo
+    if (objetivo < 50)
+    {
+        objetivo = 50;
+    }
+
+    if (objetivo > 1230)
+    {
+        objetivo = 1230;
+    }
+
+    // Lanzamos si estamos suficientemente cerca
+    return std::abs(centroGuacamaya - objetivo) <= 25;
 }

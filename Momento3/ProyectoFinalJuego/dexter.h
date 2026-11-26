@@ -25,17 +25,19 @@ private:
 
     // Tiempo restante del efecto del suero
     float tiempoSuero;
+
+    // Tiempo restante de ralentizacion
+    float tiempoRalentizacion;
 public:
     Dexter();
-    //------------------------------------------------ nivel 1 ------------------------------------//
+
     void mover(int dirX, int dirY, Mapa &mapa);
 
     float getX();
     float getY();
     int getAncho();
     int getAlto();
-
-    // nivel 1
+ //------------------------------------------------ nivel 1 ------------------------------------//
     void iniciarNivel1();
     void desplazarse(int direccion, float intervaloTiempo);
     void saltar();
@@ -72,6 +74,11 @@ public:
     void activarSuero();
     void actualizarSuero(float intervaloTiempo);
     bool tieneSuero() const;
+
+    //Efecto de excremento
+    void ralentizar();
+    void actualizarRalentizacion(float intervaloTiempo);
+    bool estaRalentizado() const;
 };
 
 #endif // DEXTER_H

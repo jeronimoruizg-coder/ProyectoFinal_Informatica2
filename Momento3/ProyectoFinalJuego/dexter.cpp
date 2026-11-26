@@ -15,7 +15,7 @@ Dexter::Dexter()
     // Inicializamos el estado de recoleccion
     tiempoRecoleccion = 0;
     orientacion = 1;
-
+    tiempoRalentizacion = 0;
     vidas = 3;
     tiempoInvulnerabilidad = 0;
     tiempoSuero = 0;
@@ -75,6 +75,8 @@ void Dexter::iniciarNivel1() //Modificamos los atributos de dexter para el nivel
     vidas = 3;
     tiempoInvulnerabilidad = 0;
     tiempoSuero = 0;
+    //Inicializamos el tiempo de ralentizacion
+    tiempoRalentizacion = 0;
 }
 
 void Dexter::desplazarse(int direccion, float intervaloTiempo)
@@ -88,8 +90,19 @@ void Dexter::desplazarse(int direccion, float intervaloTiempo)
     {
         orientacion = -1;
     }
+
+
+    // Calculamos la velocidad real de movimiento
+    float velocidadActual = velocidad;
+
+    // Reducimos la velocidad si Dexter esta ralentizado
+    if (estaRalentizado())
+    {
+        velocidadActual *= 0.5;
+    }
+
     // Calculamos la nueva posicion horizontal
-    x = x + direccion * velocidad * intervaloTiempo; //Primer Calculo Fisico (MRU)
+    x = x + direccion * velocidadActual * intervaloTiempo; //Primer Calculo Fisico (MRU)
 
     // Limite izquierdo del escenario
     if (x < 0)
@@ -296,4 +309,31 @@ void Dexter::actualizarSuero(float intervaloTiempo)
 bool Dexter::tieneSuero() const
 {
     return tiempoSuero > 0;
+}
+
+
+// Activamos la ralentizacion durante dos segundos
+void Dexter::ralentizar()
+{
+    tiempoRalentizacion = 2;
+}
+
+// Actualizamos la duracion del efecto
+void Dexter::actualizarRalentizacion(float intervaloTiempo)
+{
+    if (tiempoRalentizacion > 0)
+    {
+        tiempoRalentizacion -= intervaloTiempo;
+
+        if (tiempoRalentizacion < 0)
+        {
+            tiempoRalentizacion = 0;
+        }
+    }
+}
+
+// Consultamos si Dexter esta ralentizado
+bool Dexter::estaRalentizado() const
+{
+    return tiempoRalentizacion > 0;
 }
