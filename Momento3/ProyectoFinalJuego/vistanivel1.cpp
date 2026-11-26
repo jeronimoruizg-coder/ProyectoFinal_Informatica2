@@ -3,10 +3,25 @@
 #include <QColor>
 #include <QBrush>
 #include <QPen>
+#include <QTransform>
+#include <QString>
+#include <stdexcept>
+#include <QMessageBox>
+#include <QDir>
+#include <QStringList>
+#include <QDebug>
 
 VistaNivel1::VistaNivel1() {
+    //Manejo de la interaccion con teclado
     izquierdaPresionada = false;
     derechaPresionada = false;
+    saltarPresionado = false;
+
+    //Manejo de animacion sprites
+    fotogramaActual = 0;
+    tiempoAnimacion = 0;
+    estadoAnimacion = 0;
+    mirandoDerecha = true;
     escena = new QGraphicsScene(this);
     escena->setSceneRect(0, 0, 1280, 720); // Le da las dimensiones a la escena, en este caso 1280x720
     setScene(escena); // Esta funcion sirve para que la vista muestre la escena actual
@@ -18,10 +33,27 @@ VistaNivel1::VistaNivel1() {
                     QBrush(QColor(135, 96, 68))); // Rellenamos el rectanguno(suelo) con el color
 
     //Agregamos el objeto de dexter
-    QPixmap imagenDexter(50, 80); //Creamos una imagen de 50pixeles de ancho x 80 de alto
-    imagenDexter.fill(Qt::blue); // Agregamos el relleno a la imagen
-    figuraDexter = escena->addPixmap(imagenDexter); //Se crea un objeto QGraphicsPixmapItem y se guarda su puntero
-    figuraDexter->setPos(200, 570);//Le damos una posicion inicial a Dexter
+    // Cargamos todos los sprites una sola vez
+    // Intentamos cargar todos los sprites del personaje
+    try
+    {
+        cargarSprites();
+    }
+    catch (const runtime_error &error)
+    {
+        // Informamos que recurso produjo el error
+        QMessageBox::critical(this, "Error de recursos",
+                              error.what());
+
+        // Detenemos la inicializacion del nivel
+        return;
+    }
+
+    // Mostramos el primer fotograma de reposo
+    figuraDexter = escena->addPixmap(spritesReposo[0]);
+    figuraDexter->setScale(2);  // Duplicamos el tamaño visual de la imagen
+    figuraDexter->setOffset(-19.5, -25); // Ajustamos la imagen respecto a la posicion fisica
+    figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());//Le damos una posicion inicial a Dexter
 
     //Detalles de la vista grafica
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);//Desactiva el desplazamiento Horizontal
@@ -29,62 +61,328 @@ VistaNivel1::VistaNivel1() {
     setFrameShape(QFrame::NoFrame);// Elimina el borde que Qt coloca alrededor de la vista.
     setFixedSize(1280, 720);// Le damos el tamaño fijo a nuestra Vista grafica, lo que se va a ver al final
 
+    // Creamos el temporizador
+    temporizador = new QTimer(this);
+    // Conectamos la señal con nuestra funcion
+    connect(temporizador, &QTimer::timeout,this, &VistaNivel1::actualizarJuego);
+    temporizador->start(16);
+
 }
 
 // Detectamos cuando el jugador presiona una tecla
-void VistaNivel1::keyPressEvent(QKeyEvent *event)
+void VistaNivel1::keyPressEvent(QKeyEvent *evento)
 {
     // Ignoramos las repeticiones automaticas del teclado
-    if (event->isAutoRepeat())
+    if (evento->isAutoRepeat())
     {
         return;
     }
 
     // Detectamos el movimiento hacia la izquierda
-    if (event->key() == Qt::Key_A ||
-        event->key() == Qt::Key_Left)
+    if (evento->key() == Qt::Key_A)
     {
         izquierdaPresionada = true;
     }
 
     // Detectamos el movimiento hacia la derecha
-    else if (event->key() == Qt::Key_D ||
-             event->key() == Qt::Key_Right)
+    else if (evento->key() == Qt::Key_D)
     {
         derechaPresionada = true;
+    }
+    //Detectamos el salto
+    else if (evento->key() == Qt::Key_W)
+    {
+        saltarPresionado = true;
+    }
+
+    // Detectamos la accion de utilizar la red
+    else if (evento->key() == Qt::Key_Space)
+    {
+        nivel.recolectar();
     }
 
     else
     {
-        QGraphicsView::keyPressEvent(event);
+        QGraphicsView::keyPressEvent(evento);
     }
 }
 
 // Detectamos cuando el jugador suelta una tecla
-void VistaNivel1::keyReleaseEvent(QKeyEvent *event)
+void VistaNivel1::keyReleaseEvent(QKeyEvent *evento)
 {
     // Ignoramos las repeticiones automaticas del teclado
-    if (event->isAutoRepeat())
+    if (evento->isAutoRepeat())
     {
         return;
     }
 
     // Dejamos de solicitar movimiento hacia la izquierda
-    if (event->key() == Qt::Key_A ||
-        event->key() == Qt::Key_Left)
+    if (evento->key() == Qt::Key_A)
     {
         izquierdaPresionada = false;
     }
 
     // Dejamos de solicitar movimiento hacia la derecha
-    else if (event->key() == Qt::Key_D ||
-             event->key() == Qt::Key_Right)
+    else if (evento->key() == Qt::Key_D)
     {
         derechaPresionada = false;
     }
 
+    else if (evento->key() == Qt::Key_W)
+    {
+        saltarPresionado = false;
+    }
+
     else
     {
-        QGraphicsView::keyReleaseEvent(event);
+        QGraphicsView::keyReleaseEvent(evento);
+    }
+}
+
+//Actualiza la posicion de dexter
+void VistaNivel1::actualizarJuego()
+{
+    int direccion = 0;
+
+    if (izquierdaPresionada)
+    {
+        direccion--;
+    }
+
+    if (derechaPresionada)
+    {
+        direccion++;
+    }
+    if (saltarPresionado)
+    {
+        nivel.saltar();
+    }
+
+    nivel.actualizar(direccion, 0.016);
+
+    figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());
+    actualizarAnimacion(direccion);
+}
+
+// Actualizamos la animacion y orientacion de Dexter
+void VistaNivel1::actualizarAnimacion(int direccion)
+{
+    // Guardamos la orientacion anterior
+    bool orientacionAnterior = mirandoDerecha;
+
+    // Determinamos hacia donde mira Dexter
+    if (direccion > 0)
+    {
+        mirandoDerecha = true;
+    }
+    else if (direccion < 0)
+    {
+        mirandoDerecha = false;
+    }
+
+    // Variables para controlar la animacion
+    int nuevoEstado;
+    int duracionFotograma;
+    int cantidadFotogramas;
+
+    // Puntero al vector de la animacion actual
+    // Evitamos copiar todos los fotogramas
+    vector<QPixmap> *spritesActuales;
+
+    // Estado 3: Dexter esta utilizando la red
+    // La recoleccion tiene prioridad sobre otras animaciones
+    if (nivel.getDexter().estaRecolectando())
+    {
+        nuevoEstado = 3;
+        duracionFotograma = 80;
+        spritesActuales = &spritesRecoleccion;
+    }
+
+    // Estado 2: Dexter se encuentra en el aire
+    else if (nivel.getDexter().getY() +
+                 nivel.getDexter().getAlto() < 650)
+    {
+        nuevoEstado = 2;
+        duracionFotograma = 100;
+        spritesActuales = &spritesSalto;
+    }
+
+    // Estado 1: Dexter se encuentra caminando
+    else if (direccion != 0)
+    {
+        nuevoEstado = 1;
+        duracionFotograma = 100;
+        spritesActuales = &spritesCaminata;
+    }
+
+    // Estado 0: Dexter permanece quieto
+    else
+    {
+        nuevoEstado = 0;
+        duracionFotograma = 200;
+        spritesActuales = &spritesReposo;
+    }
+
+    // Obtenemos la cantidad de fotogramas
+    // almacenados en el vector seleccionado
+    cantidadFotogramas = spritesActuales->size();
+
+    // Indicamos si es necesario cambiar la imagen
+    bool cambiarFotograma = false;
+
+    // Reiniciamos la animacion si cambia el estado
+    if (nuevoEstado != estadoAnimacion)
+    {
+        estadoAnimacion = nuevoEstado;
+        fotogramaActual = 0;
+        tiempoAnimacion = 0;
+
+        cambiarFotograma = true;
+    }
+
+    // Continuamos la animacion actual
+    else if (cantidadFotogramas > 1)
+    {
+        // Acumulamos el tiempo transcurrido
+        tiempoAnimacion += 16;
+
+        // Comprobamos si debemos avanzar
+        // al siguiente fotograma
+        if (tiempoAnimacion >= duracionFotograma)
+        {
+            tiempoAnimacion -= duracionFotograma;
+            fotogramaActual++;
+
+            // Reiniciamos al finalizar la animacion
+            if (fotogramaActual >= cantidadFotogramas)
+            {
+                fotogramaActual = 0;
+            }
+
+            cambiarFotograma = true;
+        }
+    }
+
+    // Cambiamos la imagen solamente cuando cambia
+    // el fotograma o la orientacion de Dexter
+    if (cambiarFotograma ||
+        orientacionAnterior != mirandoDerecha)
+    {
+        mostrarFotograma(
+            (*spritesActuales)[fotogramaActual]
+            );
+    }
+}
+
+
+// Cargamos los fotogramas de una animacion
+// dentro de su respectivo vector
+void VistaNivel1::cargarAnimacion(
+    vector<QPixmap> &sprites,
+    QString ruta, int cantidad)
+{
+    // Accedemos a la carpeta de recursos
+    QDir directorio(ruta);
+
+    // Obtenemos los nombres de los archivos PNG
+    // ordenados alfabeticamente
+    QStringList archivos = directorio.entryList(
+        QStringList() << "*.png",
+        QDir::Files,
+        QDir::Name
+        );
+
+    // Comprobamos que existan suficientes imagenes
+    if (archivos.size() < cantidad)
+    {
+        throw runtime_error(
+            ("Faltan sprites en: " + ruta).toStdString()
+            );
+    }
+
+    // Reservamos la capacidad necesaria del vector
+    // para evitar reasignaciones innecesarias
+    sprites.reserve(cantidad);
+
+    // Recorremos los archivos de la animacion
+    for (int i = 0; i < cantidad; i++)
+    {
+        // Construimos la ruta completa del archivo
+        QString nombre = ruta + "/" + archivos[i];
+
+        // Cargamos la imagen
+        QPixmap imagen(nombre);
+
+        // Comprobamos que se cargo correctamente
+        if (imagen.isNull())
+        {
+            throw runtime_error(
+                ("No se pudo cargar: " + nombre).toStdString()
+                );
+        }
+
+        // Almacenamos el fotograma en el vector
+        sprites.push_back(imagen);
+    }
+}
+
+
+// Cargamos todas las animaciones de Dexter
+void VistaNivel1::cargarSprites()
+{
+    // Reposo: utilizamos una sola imagen
+    // para que Dexter permanezca quieto
+    cargarAnimacion(spritesReposo,
+                    ":/sprites/dexter/reposo", 1);
+
+    // Caminata: seis fotogramas
+    cargarAnimacion(spritesCaminata,
+                    ":/sprites/dexter/caminata", 6);
+
+    // Salto: cuatro fotogramas
+    cargarAnimacion(spritesSalto,
+                    ":/sprites/dexter/salto", 4);
+
+    // Recoleccion: cinco fotogramas
+    cargarAnimacion(spritesRecoleccion,
+                    ":/sprites/dexter/recoleccion", 5);
+
+    // Daño: cuatro fotogramas
+    cargarAnimacion(spritesDano,
+                    ":/sprites/dexter/dano", 4);
+}
+
+
+// Mostramos la imagen segun la orientacion
+// actual del personaje
+void VistaNivel1::mostrarFotograma(
+    const QPixmap &imagen)
+{
+    // Si Dexter mira hacia la derecha,
+    // utilizamos la imagen original
+    if (mirandoDerecha)
+    {
+        figuraDexter->setPixmap(imagen);
+
+        // Alineamos la imagen con el cuerpo fisico
+        figuraDexter->setOffset(-19.5, -25);
+    }
+
+    // Si Dexter mira hacia la izquierda,
+    // invertimos horizontalmente la imagen
+    else
+    {
+        QPixmap imagenInvertida = imagen.transformed(
+            QTransform().scale(-1, 1)
+            );
+
+        // Mostramos la imagen invertida
+        figuraDexter->setPixmap(imagenInvertida);
+
+        // Compensamos el desplazamiento de la imagen
+        // para conservar el centro del cuerpo fisico
+        figuraDexter->setOffset(
+            44.5 - imagen.width(), -25
+            );
     }
 }
