@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<RCC>
+  <qresource prefix="/">
+    <file>sprites/objetos/comunes/comun_00.png</file>
+    <file>sprites/objetos/comunes/comun_01.png</file>
+    <file>sprites/objetos/comunes/comun_02.png</file>
+    <file>sprites/objetos/comunes/comun_03.png</file>
+    <file>sprites/objetos/especial/especial_00.png</file>
+    <file>sprites/objetos/semilla/semilla_00.png</file>
+    <file>sprites/objetos/medicinal/medicinal_00.png</file>
+    <file>sprites/objetos/suero/suero_00.png</file>
+    <file>sprites/objetos/explosion/explosion_00.png</file>
+    <file>sprites/objetos/explosion/explosion_01.png</file>
+    <file>sprites/objetos/explosion/explosion_02.png</file>
+    <file>sprites/objetos/explosion/explosion_03.png</file>
+    <file>sprites/objetos/explosion/explosion_04.png</file>
+    <file>sprites/objetos/explosion/explosion_05.png</file>
+    <file>sprites/objetos/explosion/explosion_06.png</file>
+    <file>sprites/objetos/explosion/explosion_07.png</file>
+  </qresource>
+</RCC>
