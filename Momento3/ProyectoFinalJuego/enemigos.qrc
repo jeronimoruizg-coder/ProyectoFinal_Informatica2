@@ -1,0 +1,27 @@
+<RCC>
+    <qresource prefix="/">
+        <file>sprites/enemigos/advertencia/advertencia_00.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_01.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_02.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_03.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_04.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_05.png</file>
+        <file>sprites/enemigos/advertencia/advertencia_06.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_00.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_01.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_02.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_03.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_04.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_05.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_06.png</file>
+        <file>sprites/enemigos/hormiga/hormiga_07.png</file>
+        <file>sprites/enemigos/jabali/jabali_00.png</file>
+        <file>sprites/enemigos/jabali/jabali_01.png</file>
+        <file>sprites/enemigos/jabali/jabali_02.png</file>
+        <file>sprites/enemigos/jabali/jabali_03.png</file>
+        <file>sprites/enemigos/jabali/jabali_04.png</file>
+        <file>sprites/enemigos/jabali/jabali_05.png</file>
+        <file>sprites/enemigos/jabali/jabali_06.png</file>
+        <file>sprites/enemigos/jabali/jabali_07.png</file>
+    </qresource>
+</RCC>

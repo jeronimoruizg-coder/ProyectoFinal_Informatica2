@@ -19,10 +19,11 @@ set(PROJECT_SOURCES
         mainwindow.ui
         DexterNivel1.qrc
         objetos.qrc
+        enemigos.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(ProyectoFinalJuego
+qt_add_executable(ProyectoFinalJuego
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         juego.h juego.cpp
@@ -38,6 +39,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         vistanivel1.h vistanivel1.cpp
         recolectables.h recolectables.cpp
         beneficios.h beneficios.cpp
+        hormiga.h hormiga.cpp
+        jabali.h jabali.cpp
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ProyectoFinalJuego APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
