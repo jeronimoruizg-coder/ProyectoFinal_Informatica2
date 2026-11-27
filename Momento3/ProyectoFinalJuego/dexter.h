@@ -83,6 +83,28 @@ public:
 //------------------------------------------------ nivel 2 ------------------------------------//
     void iniciarNivel2();
     void setPosicion(float nuevaX, float nuevaY);
+
+
+    // Power-ups del nivel 2
+    void activarSueroNivel2();
+    void activarPistola();
+    void actualizarPoderes(float intervaloTiempo);
+    bool tienePistola() const;
+    bool puedeDisparar() const;
+    void registrarDisparo();
+    float getTiempoSuero() const;
+    float getTiempoPistola() const;
+
+    // Hacia donde mira Dexter (para saber hacia donde dispara)
+    int getMirandoX() const;
+    int getMirandoY() const;
+
+private:
+    // Atributos del nivel 2
+    float tiempoPistola;
+    float recargaDisparo;
+    int mirandoX;
+    int mirandoY;
 };
 
 #endif // DEXTER_H

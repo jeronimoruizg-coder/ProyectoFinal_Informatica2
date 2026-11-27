@@ -36,6 +36,13 @@ VistaNivel2::VistaNivel2(bool dificultad): nivel(dificultad)
     textoVidas->setZValue(20);
     actualizarContadorVidas();
 
+    // Texto de los power-ups, debajo de las vidas
+    textoPoderes = escena->addText("");
+    textoPoderes->setDefaultTextColor(Qt::white);
+    textoPoderes->setFont(QFont("Arial", 14, QFont::Bold));
+    textoPoderes->setPos(20, 55);
+    textoPoderes->setZValue(20);
+
     // Detalles de la vista
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -442,7 +449,10 @@ void VistaNivel2::actualizarJuego()
     actualizarNieblasGraficas();
     actualizarArmadillosGraficos();
     actualizarMonosGraficos();
+    actualizarBeneficiosGraficos();
+    actualizarDisparosGraficos();
     actualizarContadorVidas();
+    actualizarTextoPoderes();
 
     if (nivel.haPerdido() || nivel.haGanado())
     {
@@ -474,6 +484,7 @@ void VistaNivel2::keyPressEvent(QKeyEvent *evento)
     else if (evento->key() == Qt::Key_A) izquierdaPresionada = true;
     else if (evento->key() == Qt::Key_D) derechaPresionada = true;
     else if (evento->key() == Qt::Key_Space) nivel.ponerBomba();
+        else if (evento->key() == Qt::Key_J) nivel.disparar();
     else QGraphicsView::keyPressEvent(evento);
 }
 
@@ -570,4 +581,98 @@ void VistaNivel2::finalizarPartida()
     botonRegresar->setZValue(31);
 
     connect(regresar, &QPushButton::clicked, this, &VistaNivel2::solicitarMenuPrincipal);
+}
+
+//--------------------------------------------------- Power-ups ----------------------------------//
+
+void VistaNivel2::actualizarBeneficiosGraficos()
+{
+    const std::vector<Beneficios*> &beneficios = nivel.getBeneficios();
+
+    // Una figura por power-up, igual que con las bombas
+    while (figurasBeneficios.size() < beneficios.size())
+    {
+        QGraphicsRectItem *figura = escena->addRect(
+            0, 0, beneficios[0]->getAncho(), beneficios[0]->getAlto(),
+            QPen(Qt::white, 2), QBrush(Qt::white));
+        figura->setZValue(4);
+        figurasBeneficios.push_back(figura);
+    }
+
+    while (figurasBeneficios.size() > beneficios.size())
+    {
+        delete figurasBeneficios.back();
+        figurasBeneficios.pop_back();
+    }
+
+    for (int i = 0; i < (int)beneficios.size(); i++)
+    {
+        // Mientras la pared lo tape no se dibuja
+        if (beneficios[i]->estaOculto())
+        {
+            figurasBeneficios[i]->hide();
+            continue;
+        }
+
+        figurasBeneficios[i]->show();
+        figurasBeneficios[i]->setPos(MARGEN_X + beneficios[i]->getX(),
+                                     MARGEN_Y + beneficios[i]->getY());
+
+        // Suero en azul claro, pistola en morado
+        if (beneficios[i]->getTipo() == Beneficios::SUERO)
+        {
+            figurasBeneficios[i]->setBrush(QBrush(QColor(60, 200, 230)));
+        }
+        else
+        {
+            figurasBeneficios[i]->setBrush(QBrush(QColor(150, 60, 200)));
+        }
+    }
+}
+
+void VistaNivel2::actualizarDisparosGraficos()
+{
+    const std::vector<DisparoVeneno*> &disparos = nivel.getDisparos();
+
+    while (figurasDisparos.size() < disparos.size())
+    {
+        QGraphicsEllipseItem *figura = escena->addEllipse(
+            0, 0, disparos[0]->getAncho(), disparos[0]->getAlto(),
+            QPen(Qt::NoPen), QBrush(QColor(120, 220, 40)));
+        figura->setZValue(11);
+        figurasDisparos.push_back(figura);
+    }
+
+    while (figurasDisparos.size() > disparos.size())
+    {
+        delete figurasDisparos.back();
+        figurasDisparos.pop_back();
+    }
+
+    for (int i = 0; i < (int)disparos.size(); i++)
+    {
+        figurasDisparos[i]->setPos(MARGEN_X + disparos[i]->getX(),
+                                   MARGEN_Y + disparos[i]->getY());
+    }
+}
+
+void VistaNivel2::actualizarTextoPoderes()
+{
+    Dexter &dexter = nivel.getDexter();
+    QString nuevoTexto = "";
+
+    // Solo mostramos los power-ups que estan activos (segundos sin decimales)
+    if (dexter.getTiempoSuero() > 0)
+    {
+        nuevoTexto += "Suero: " + QString::number((int)dexter.getTiempoSuero() + 1) + " s\n";
+    }
+    if (dexter.tienePistola())
+    {
+        nuevoTexto += "Pistola (J): " + QString::number((int)dexter.getTiempoPistola() + 1) + " s";
+    }
+
+    if (textoPoderes->toPlainText() != nuevoTexto)
+    {
+        textoPoderes->setPlainText(nuevoTexto);
+    }
 }
