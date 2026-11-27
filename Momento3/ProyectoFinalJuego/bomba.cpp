@@ -44,8 +44,9 @@ Bomba::Bomba(int filaDestino, int columnaDestino, int filaLanzamiento,
     explotada = false;
     tiempoExplosion = 0;
 
-    // Dexter no esta encima y la semilla no bloquea a nadie
-    dexterEncima = false;
+    // Igual que la bomba: si al caer Dexter esta encima,
+    // no se vuelve solida hasta que el se baje
+    dexterEncima = true;
 
     esSemilla = true;
     filaOrigen = filaLanzamiento;
@@ -208,7 +209,8 @@ float Bomba::getTiempoMecha() const
 
 bool Bomba::esSolidaParaDexter() const
 {
-    return !explotada && !dexterEncima && !esSemilla;
+    // La semilla solo es solida cuando ya cayo (la bomba normal siempre tiene progreso 1)
+    return !explotada && !dexterEncima && getProgresoVuelo() >= 1;
 }
 
 int Bomba::getAlcance() const

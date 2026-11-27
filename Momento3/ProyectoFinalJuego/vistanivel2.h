@@ -61,6 +61,17 @@ private:
     std::vector<QGraphicsRectItem*> figurasMonos;
     void actualizarMonosGraficos();
 
+    //--------------------------------------------------- Power-ups --------------------------------//
+    // Una figura por cada power-up y por cada disparo
+    std::vector<QGraphicsRectItem*> figurasBeneficios;
+    std::vector<QGraphicsEllipseItem*> figurasDisparos;
+    void actualizarBeneficiosGraficos();
+    void actualizarDisparosGraficos();
+
+    // Muestra cuanto le queda a cada power-up
+    QGraphicsTextItem *textoPoderes;
+    void actualizarTextoPoderes();
+
     // Cuenta los cuadros del juego (para hacer parpadear cosas)
     int contadorCuadros;
 

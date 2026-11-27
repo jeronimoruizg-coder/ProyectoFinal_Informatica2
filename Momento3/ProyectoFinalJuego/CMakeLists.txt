@@ -52,6 +52,7 @@ qt_add_executable(ProyectoFinalJuego
         niebla.h niebla.cpp
         armadillo.h armadillo.cpp
         mono.h mono.cpp
+        disparoveneno.h disparoveneno.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

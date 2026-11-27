@@ -26,6 +26,18 @@ void Dexter::mover(int dirX, int dirY, float intervaloTiempo, Mapa &mapa)
     // distancia que avanza en este intervalo (MRU)
     float paso = velocidad * intervaloTiempo;
 
+
+    // Con el suero camina al doble de velocidad
+    if (tiempoSuero > 0) {
+        paso = paso * 2;
+    }
+
+    // Guardamos hacia donde mira para saber hacia donde dispara
+    if (dirX != 0 || dirY != 0) {
+        mirandoX = dirX;
+        mirandoY = dirY;
+    }
+
     // cada eje se revisa por separado para que pueda deslizarse por las paredes
     float nuevaX = x + dirX * paso;
     if (!chocaConPared(nuevaX, y, mapa)) {
@@ -364,6 +376,12 @@ void Dexter::iniciarNivel2() //Modificamos los atributos de dexter para el laber
     tiempoSuero = 0;
     tiempoRalentizacion = 0;
 
+    // Sin power-ups al empezar y mirando hacia abajo
+    tiempoPistola = 0;
+    recargaDisparo = 0;
+    mirandoX = 0;
+    mirandoY = 1;
+
 }
 
 
@@ -373,3 +391,61 @@ void Dexter::setPosicion(float nuevaX, float nuevaY)
     x = nuevaX;
     y = nuevaY;
 }
+
+//------------------------------------------------ Power-ups nivel 2 ------------------------------------//
+
+// El suero del nivel 2 dura 15 s. No tocamos la velocidad:
+// mover() mira si queda suero y duplica el paso
+void Dexter::activarSueroNivel2()
+{
+    tiempoSuero = 15;
+}
+
+// La pistola de veneno dura 25 s
+void Dexter::activarPistola()
+{
+    tiempoPistola = 25;
+    recargaDisparo = 0;
+}
+
+// Descuenta el tiempo de los power-ups y de la recarga
+void Dexter::actualizarPoderes(float intervaloTiempo)
+{
+    if (tiempoSuero > 0)
+    {
+        tiempoSuero -= intervaloTiempo;
+        if (tiempoSuero < 0) tiempoSuero = 0;
+    }
+
+    if (tiempoPistola > 0)
+    {
+        tiempoPistola -= intervaloTiempo;
+        if (tiempoPistola < 0) tiempoPistola = 0;
+    }
+
+    if (recargaDisparo > 0)
+    {
+        recargaDisparo -= intervaloTiempo;
+    }
+}
+
+bool Dexter::tienePistola() const
+{
+    return tiempoPistola > 0;
+}
+
+// Solo puede disparar una vez por segundo
+bool Dexter::puedeDisparar() const
+{
+    return tiempoPistola > 0 && recargaDisparo <= 0;
+}
+
+void Dexter::registrarDisparo()
+{
+    recargaDisparo = 1;
+}
+
+float Dexter::getTiempoSuero() const { return tiempoSuero; }
+float Dexter::getTiempoPistola() const { return tiempoPistola; }
+int Dexter::getMirandoX() const { return mirandoX; }
+int Dexter::getMirandoY() const { return mirandoY; }

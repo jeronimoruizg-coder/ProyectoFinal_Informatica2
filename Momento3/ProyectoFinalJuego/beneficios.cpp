@@ -39,3 +39,36 @@ int Beneficios::getTipo() const
 {
     return tipo;
 }
+
+//------------------------------------------------ nivel 2 ------------------------------------//
+
+// Beneficio del nivel 2: queda quieto en su casilla, escondido
+Beneficios::Beneficios(int filaInicial, int columnaInicial, int tipoBeneficio)
+{
+    fila = filaInicial;
+    columna = columnaInicial;
+    tipo = tipoBeneficio;
+
+    // Arranca escondido debajo de la pared
+    oculto = true;
+    velocidadY = 0;
+
+    // Un poco mas pequeno que la casilla y centrado
+    ancho = 28;
+    alto = 28;
+    x = columna * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - ancho) / 2;
+    y = fila * Mapa::TAM_CASILLA + (Mapa::TAM_CASILLA - alto) / 2;
+}
+
+void Beneficios::actualizar(Mapa &mapa)
+{
+    // Si la pared que lo tapaba ya es pasillo, se deja ver
+    if (oculto && mapa.getCasilla(fila, columna) == Mapa::PASILLO)
+    {
+        oculto = false;
+    }
+}
+
+bool Beneficios::estaOculto() const { return oculto; }
+int Beneficios::getFila() const { return fila; }
+int Beneficios::getColumna() const { return columna; }

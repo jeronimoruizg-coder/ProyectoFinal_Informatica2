@@ -8,6 +8,8 @@
 #include "armadillo.h"
 #include "mono.h"
 #include "inteligencia.h"
+#include "beneficios.h"
+#include "disparoveneno.h"
 #include <vector>
 
 class Nivel2
@@ -41,7 +43,7 @@ private:
     std::vector<Armadillo*> armadillos;
     std::vector<Mono*> monos;
 
-    // "Cerebro" que comparten los monos (igual que la guacamaya en el nivel 1)
+    // "Cerebro" de mono
     Inteligencia inteligenciaMono;
 
     void crearEnemigos();
@@ -56,6 +58,21 @@ private:
     // Abre la puerta cuando ya no quedan enemigos
     void revisarPuerta();
 
+    // Segundos que Dexter queda aturdido despues del golpe del armadillo
+    float tiempoAturdido;
+
+    // Power-ups escondidos en las paredes rompibles
+    std::vector<Beneficios*> beneficios;
+    void crearBeneficios();
+    void actualizarBeneficios();
+
+    // Disparos de la pistola de veneno
+    std::vector<DisparoVeneno*> disparos;
+    void actualizarDisparos(float intervaloTiempo);
+    bool disparoAlcanza(float x, float y, int ancho, int alto);
+
+    void eliminarBeneficiosYDisparos();
+
 public:
     Nivel2(bool dificultad = false);
     ~Nivel2();
@@ -69,12 +86,17 @@ public:
     //Dexter pone una bomba en la casilla donde esta parado
     void ponerBomba();
 
+    // Dexter dispara si tiene la pistola de veneno
+    void disparar();
+
     Mapa &getMapa();
     Dexter &getDexter();
     const std::vector<Bomba*> &getBombas() const;
     const std::vector<Niebla*> &getNieblas() const;
     const std::vector<Armadillo*> &getArmadillos() const;
     const std::vector<Mono*> &getMonos() const;
+    const std::vector<Beneficios*> &getBeneficios() const;
+    const std::vector<DisparoVeneno*> &getDisparos() const;
 
     bool haPerdido() const;
     bool haGanado();

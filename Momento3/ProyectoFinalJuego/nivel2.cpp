@@ -16,14 +16,18 @@ Nivel2::~Nivel2()
     // Liberamos las bombas que queden al cerrar el nivel
     eliminarTodasLasBombas();
     eliminarTodosLosEnemigos();
+    eliminarBeneficiosYDisparos();
 }
 
 void Nivel2::reiniciar()
 {
     eliminarTodasLasBombas();
+    eliminarBeneficiosYDisparos();
     mapa.reiniciar();
     dexter.iniciarNivel2();
+    tiempoAturdido = 0;
     crearEnemigos();
+    crearBeneficios();
 }
 
 void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
@@ -34,10 +38,21 @@ void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
         return;
     }
 
-    moverDexter(dirX, dirY, intervaloTiempo);
+    // Despues del golpe del armadillo Dexter no se puede mover un momento
+    if (tiempoAturdido > 0)
+    {
+        tiempoAturdido -= intervaloTiempo;
+    }
+    else
+    {
+        moverDexter(dirX, dirY, intervaloTiempo);
+    }
     dexter.actualizarInvulnerabilidad(intervaloTiempo);
+    dexter.actualizarPoderes(intervaloTiempo);
 
     actualizarBombas(intervaloTiempo);
+    actualizarBeneficios();
+    actualizarDisparos(intervaloTiempo);
     actualizarNieblas(intervaloTiempo);
     actualizarArmadillos(intervaloTiempo);
     actualizarMonos(intervaloTiempo);
@@ -134,9 +149,11 @@ void Nivel2::moverDexter(int dirX, int dirY, float intervaloTiempo)
     }
 
     // Cuando Dexter termina de salir de su bomba, esta se vuelve solida
+    // (la semilla del mono solo se revisa cuando ya cayo)
     for (int i = 0; i < (int)bombas.size(); i++)
     {
         if (bombas[i]->estaDexterEncima() &&
+            bombas[i]->getProgresoVuelo() >= 1 &&
             !tocaADexter(bombas[i]->getX(), bombas[i]->getY(),
                          bombas[i]->getAncho(), bombas[i]->getAlto()))
         {
@@ -258,8 +275,9 @@ void Nivel2::actualizarNieblas(float intervaloTiempo)
         int fila = (niebla->getY() + niebla->getAlto() / 2) / Mapa::TAM_CASILLA;
         int columna = (niebla->getX() + niebla->getAncho() / 2) / Mapa::TAM_CASILLA;
 
-        // Si el fuego de una bomba la alcanza, desaparece
-        if (hayFuegoEnCasilla(fila, columna))
+        // Si el fuego de una bomba o un disparo la alcanza, desaparece
+        if (hayFuegoEnCasilla(fila, columna) ||
+            disparoAlcanza(niebla->getX(), niebla->getY(), niebla->getAncho(), niebla->getAlto()))
         {
             niebla->morir();
         }
@@ -296,8 +314,10 @@ void Nivel2::actualizarArmadillos(float intervaloTiempo)
         int fila = (armadillo->getY() + armadillo->getAlto() / 2) / Mapa::TAM_CASILLA;
         int columna = (armadillo->getX() + armadillo->getAncho() / 2) / Mapa::TAM_CASILLA;
 
-        // Muere si lo alcanza el fuego
-        if (hayFuegoEnCasilla(fila, columna))
+        // Muere si lo alcanza el fuego o un disparo
+        if (hayFuegoEnCasilla(fila, columna) ||
+            disparoAlcanza(armadillo->getX(), armadillo->getY(),
+                           armadillo->getAncho(), armadillo->getAlto()))
         {
             armadillo->morir();
         }
@@ -307,7 +327,14 @@ void Nivel2::actualizarArmadillos(float intervaloTiempo)
         else if (tocaADexter(armadillo->getX(), armadillo->getY(),
                              armadillo->getAncho(), armadillo->getAlto()))
         {
+            int vidasAntes = dexter.getVidas();
             dexter.recibirDano();
+
+            // Si el golpe si le quito vida, queda aturdido 1 segundo
+            if (dexter.getVidas() < vidasAntes)
+            {
+                tiempoAturdido = 1;
+            }
 
             if (armadillo->estaEmbistiendo())
             {
@@ -351,9 +378,10 @@ void Nivel2::actualizarMonos(float intervaloTiempo)
         int fila = (mono->getY() + mono->getAlto() / 2) / Mapa::TAM_CASILLA;
         int columna = (mono->getX() + mono->getAncho() / 2) / Mapa::TAM_CASILLA;
 
-        // Muere si lo alcanza el fuego
+        // Muere si lo alcanza el fuego o un disparo
         // (tocarlo no hace dano: el mono solo ataca con sus semillas)
-        if (hayFuegoEnCasilla(fila, columna))
+        if (hayFuegoEnCasilla(fila, columna) ||
+            disparoAlcanza(mono->getX(), mono->getY(), mono->getAncho(), mono->getAlto()))
         {
             mono->morir();
         }
@@ -445,4 +473,187 @@ bool Nivel2::haGanado()
 {
     return mapa.estaPuertaAbierta() &&
            mapa.getCasilla(getFilaDexter(), getColumnaDexter()) == Mapa::PUERTA;
+}
+
+//--------------------------------------------------- Power-ups ----------------------------------//
+
+// Esconde los power-ups debajo de paredes rompibles escogidas al azar
+void Nivel2::crearBeneficios()
+{
+    // Guardamos todas las casillas que tienen pared rompible
+    std::vector<int> filasLibres;
+    std::vector<int> columnasLibres;
+
+    for (int f = 0; f < Mapa::FILAS; f++)
+    {
+        for (int c = 0; c < Mapa::COLUMNAS; c++)
+        {
+            if (mapa.getCasilla(f, c) == Mapa::PARED_ROMPIBLE)
+            {
+                filasLibres.push_back(f);
+                columnasLibres.push_back(c);
+            }
+        }
+    }
+
+    // En dificil hay menos power-ups
+    int cantidadSueros = 4;
+    int cantidadPistolas = 3;
+    if (dificil)
+    {
+        cantidadSueros = 3;
+        cantidadPistolas = 2;
+    }
+
+    int total = cantidadSueros + cantidadPistolas;
+
+    for (int i = 0; i < total && !filasLibres.empty(); i++)
+    {
+        // Escogemos una pared al azar y la quitamos de la lista
+        // para no poner dos power-ups en la misma casilla
+        int indice = rand() % filasLibres.size();
+
+        int tipo = Beneficios::SUERO;
+        if (i >= cantidadSueros)
+        {
+            tipo = Beneficios::PISTOLA;
+        }
+
+        beneficios.push_back(new Beneficios(filasLibres[indice], columnasLibres[indice], tipo));
+
+        filasLibres.erase(filasLibres.begin() + indice);
+        columnasLibres.erase(columnasLibres.begin() + indice);
+    }
+}
+
+void Nivel2::actualizarBeneficios()
+{
+    int i = 0;
+
+    while (i < (int)beneficios.size())
+    {
+        Beneficios *beneficio = beneficios[i];
+        bool hayFuego = hayFuegoEnCasilla(beneficio->getFila(), beneficio->getColumna());
+
+        // Si ya estaba a la vista y lo alcanza una explosion, se destruye
+        if (!beneficio->estaOculto() && hayFuego)
+        {
+            delete beneficio;
+            beneficios.erase(beneficios.begin() + i);
+            continue;
+        }
+
+        // Solo se deja ver cuando se apaga el fuego que rompio la pared
+        if (!hayFuego)
+        {
+            beneficio->actualizar(mapa);
+        }
+
+        // Dexter lo recoge al pasar por su casilla
+        if (!beneficio->estaOculto() &&
+            beneficio->getFila() == getFilaDexter() &&
+            beneficio->getColumna() == getColumnaDexter())
+        {
+            if (beneficio->getTipo() == Beneficios::SUERO)
+            {
+                dexter.activarSueroNivel2();
+            }
+            else
+            {
+                dexter.activarPistola();
+            }
+
+            delete beneficio;
+            beneficios.erase(beneficios.begin() + i);
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
+//--------------------------------------------------- Disparos ----------------------------------//
+
+void Nivel2::disparar()
+{
+    if (!dexter.puedeDisparar())
+    {
+        return;
+    }
+
+    // El disparo sale del centro de Dexter hacia donde esta mirando
+    float centroX = dexter.getX() + dexter.getAncho() / 2;
+    float centroY = dexter.getY() + dexter.getAlto() / 2;
+
+    disparos.push_back(new DisparoVeneno(centroX, centroY,
+                                         dexter.getMirandoX(), dexter.getMirandoY()));
+    dexter.registrarDisparo();
+}
+
+void Nivel2::actualizarDisparos(float intervaloTiempo)
+{
+    int i = 0;
+
+    while (i < (int)disparos.size())
+    {
+        disparos[i]->actualizar(intervaloTiempo, mapa);
+
+        // Borramos los que chocaron con una pared o con un enemigo
+        if (!disparos[i]->estaActivo())
+        {
+            delete disparos[i];
+            disparos.erase(disparos.begin() + i);
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
+// Revisa si algun disparo toca ese rectangulo (el de un enemigo).
+// Si lo toca, el disparo se gasta
+bool Nivel2::disparoAlcanza(float x, float y, int ancho, int alto)
+{
+    for (int i = 0; i < (int)disparos.size(); i++)
+    {
+        DisparoVeneno *disparo = disparos[i];
+
+        if (disparo->estaActivo() &&
+            x < disparo->getX() + disparo->getAncho() &&
+            disparo->getX() < x + ancho &&
+            y < disparo->getY() + disparo->getAlto() &&
+            disparo->getY() < y + alto)
+        {
+            disparo->desactivar();
+            return true;
+        }
+    }
+    return false;
+}
+
+void Nivel2::eliminarBeneficiosYDisparos()
+{
+    for (int i = 0; i < (int)beneficios.size(); i++)
+    {
+        delete beneficios[i];
+    }
+    beneficios.clear();
+
+    for (int i = 0; i < (int)disparos.size(); i++)
+    {
+        delete disparos[i];
+    }
+    disparos.clear();
+}
+
+const std::vector<Beneficios*> &Nivel2::getBeneficios() const
+{
+    return beneficios;
+}
+
+const std::vector<DisparoVeneno*> &Nivel2::getDisparos() const
+{
+    return disparos;
 }

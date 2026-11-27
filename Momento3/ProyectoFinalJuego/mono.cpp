@@ -5,7 +5,7 @@ Mono::Mono(int filaInicial, int columnaInicial)
 {
     ancho = 40;
     alto = 40;
-    velocidad = 70;
+    velocidad = 85;
     direccion = 1;
     vivo = true;
 
@@ -21,7 +21,7 @@ Mono::Mono(int filaInicial, int columnaInicial)
     dirFila = 0;
     dirColumna = -1;
 
-    tiempoRecarga = 1.5;
+    tiempoRecarga = 1.0;
     estrategia = 0;
     lanzamientoPendiente = false;
     filaObjetivo = 0;
@@ -64,9 +64,15 @@ void Mono::actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba
         {
             moverAVecino(mapa, bombas, filaDexter, columnaDexter, ALEJARSE);
         }
-        else if (distancia > 3 || (filaDexter != fila && columnaDexter != columna))
+        else if (distancia > 4 || (filaDexter != fila && columnaDexter != columna))
         {
             moverAVecino(mapa, bombas, filaDexter, columnaDexter, ACERCARSE);
+        }
+        // Esta alineado pero no puede lanzar (recargando o sin donde caer):
+        // se mueve para buscar otra posicion en vez de quedarse quieto
+        else
+        {
+            moverAVecino(mapa, bombas, filaDexter, columnaDexter, PASEAR);
         }
     }
     // 3. Si no pasa nada, pasea
@@ -162,7 +168,6 @@ bool Mono::estaEnPeligro(Mapa &mapa, const std::vector<Bomba*> &bombas, int f, i
 
 //------------------------------------------------ Razonar y actuar --------------------------//
 
-// La semilla cae siempre a 2 casillas en linea recta (salta la del medio).
 // La estrategia decide en que momento lanzar.
 bool Mono::intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
                           int filaDexter, int columnaDexter, int distancia)
@@ -172,20 +177,9 @@ bool Mono::intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
     {
         return false;
     }
-    // Dexter tiene que estar en su fila o columna, a 1, 2 o 3 casillas
-    if ((filaDexter != fila && columnaDexter != columna) || distancia < 1 || distancia > 3)
-    {
-        return false;
-    }
 
-    // Estrategia 1: solo cuando Dexter queda justo en el centro del fuego
-    if (estrategia == 1 && distancia != 2)
-    {
-        return false;
-    }
-
-    // Estrategia 2: solo cuando Dexter se le esta acercando
-    if (estrategia == 2 && distancia >= distanciaAnteriorDexter)
+    // Dexter tiene que estar en su fila o columna, a 5 casillas o menos
+    if ((filaDexter != fila && columnaDexter != columna) || distancia < 1 || distancia > 5)
     {
         return false;
     }
@@ -198,20 +192,54 @@ bool Mono::intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
     if (columnaDexter > columna) pasoColumna = 1;
     if (columnaDexter < columna) pasoColumna = -1;
 
-    int filaCae = fila + pasoFila * 2;
-    int columnaCae = columna + pasoColumna * 2;
-
-    // Si donde caeria hay pared, no puede lanzar
-    if (mapa.getCasilla(filaCae, columnaCae) != Mapa::PASILLO)
+    // La semilla tiene alcance 1, asi que le pega a Dexter si cae
+    // en su casilla, una antes o una despues. La estrategia decide
+    // cual de las tres intenta primero:
+    //   0 = directo a Dexter, 1 = delante de el, 2 = detras de el
+    int saltos[3];
+    if (estrategia == 1)
     {
-        return false;
+        saltos[0] = distancia - 1;
+        saltos[1] = distancia;
+        saltos[2] = distancia + 1;
+    }
+    else if (estrategia == 2)
+    {
+        saltos[0] = distancia + 1;
+        saltos[1] = distancia;
+        saltos[2] = distancia - 1;
+    }
+    else
+    {
+        saltos[0] = distancia;
+        saltos[1] = distancia - 1;
+        saltos[2] = distancia + 1;
     }
 
-    lanzamientoPendiente = true;
-    filaObjetivo = filaCae;
-    columnaObjetivo = columnaCae;
-    tiempoRecarga = 2.5;
-    return true;
+    for (int i = 0; i < 3; i++)
+    {
+        // Muy cerca lo alcanzaria su propio fuego, muy lejos no llega
+        if (saltos[i] < 2 || saltos[i] > 4)
+        {
+            continue;
+        }
+
+        int filaCae = fila + pasoFila * saltos[i];
+        int columnaCae = columna + pasoColumna * saltos[i];
+
+        // Solo puede caer en un pasillo sin bomba (las paredes y las bombas son solidas)
+        if (estaLibre(mapa, bombas, filaCae, columnaCae))
+        {
+            lanzamientoPendiente = true;
+            filaObjetivo = filaCae;
+            columnaObjetivo = columnaCae;
+            tiempoRecarga = 2.5;
+            return true;
+        }
+    }
+
+    // No encontro donde lanzar
+    return false;
 }
 
 // Revisa si su semilla sigue en el mapa (volando, en el suelo o explotando)
