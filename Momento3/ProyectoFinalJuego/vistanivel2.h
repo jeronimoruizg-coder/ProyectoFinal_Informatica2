@@ -9,11 +9,14 @@
 #include <QTimer>
 #include <QColor>
 #include <QGraphicsEllipseItem>
+#include <QPushButton>
+#include <QGraphicsProxyWidget>
 #include <vector>
 #include "nivel2.h"
 
 class VistaNivel2 : public QGraphicsView
 {
+    Q_OBJECT
 private:
     Nivel2 nivel;
     QGraphicsScene *escena;
@@ -74,6 +77,10 @@ private:
     bool partidaTerminada;
     QGraphicsRectItem *fondoPausa;
     QGraphicsTextItem *textoPausa;
+
+    // Botones del menu de pausa
+    QGraphicsProxyWidget *botonContinuar;
+    QGraphicsProxyWidget *botonSalirMenu;
     void alternarPausa();
     void finalizarPartida();
 
@@ -83,6 +90,10 @@ public:
 protected:
     void keyPressEvent(QKeyEvent *evento);
     void keyReleaseEvent(QKeyEvent *evento);
+
+signals:
+    // Le avisa al MainWindow que hay que volver al menu
+    void solicitarMenuPrincipal();
 };
 
 #endif // VISTANIVEL2_H

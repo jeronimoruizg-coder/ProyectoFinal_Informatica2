@@ -42,20 +42,43 @@ VistaNivel2::VistaNivel2(bool dificultad): nivel(dificultad)
     setFrameShape(QFrame::NoFrame);
     setFixedSize(1280, 720);
 
-    // Mensaje de pausa
-    fondoPausa = escena->addRect(340, 260, 600, 180,
+    // Fondo del menu de pausa (mismo estilo del nivel 1)
+    fondoPausa = escena->addRect(340, 210, 600, 280,
                                  QPen(QColor(140, 170, 112), 3),
                                  QBrush(QColor(38, 59, 52)));
     fondoPausa->setZValue(30);
     fondoPausa->hide();
 
-    textoPausa = escena->addText("PARTIDA PAUSADA\nESC para continuar");
-    textoPausa->setFont(QFont("Consolas", 24, QFont::Bold));
+    textoPausa = escena->addText("PARTIDA PAUSADA");
+    textoPausa->setFont(QFont("Consolas", 28, QFont::Bold));
     textoPausa->setDefaultTextColor(QColor(255, 245, 217));
-    textoPausa->setPos((1280 - textoPausa->boundingRect().width()) / 2,
-                       (700 - textoPausa->boundingRect().height()) / 2);
+    textoPausa->setPos((1280 - textoPausa->boundingRect().width()) / 2, 230);
     textoPausa->setZValue(31);
     textoPausa->hide();
+
+    // Boton para seguir jugando
+    QPushButton *continuar = new QPushButton("CONTINUAR JUGANDO");
+    continuar->setFixedSize(360, 50);
+    continuar->setFont(QFont("Consolas", 14, QFont::Bold));
+
+    botonContinuar = escena->addWidget(continuar);
+    botonContinuar->setPos(460, 315);
+    botonContinuar->setZValue(31);
+    botonContinuar->hide();
+
+    // Boton para volver al menu
+    QPushButton *salir = new QPushButton("SALIR AL MENU PRINCIPAL");
+    salir->setFixedSize(360, 50);
+    salir->setFont(QFont("Consolas", 14, QFont::Bold));
+
+    botonSalirMenu = escena->addWidget(salir);
+    botonSalirMenu->setPos(460, 390);
+    botonSalirMenu->setZValue(31);
+    botonSalirMenu->hide();
+
+    // Al hacer clic: continuar quita la pausa, salir avisa al MainWindow
+    connect(continuar, &QPushButton::clicked, this, &VistaNivel2::alternarPausa);
+    connect(salir, &QPushButton::clicked, this, &VistaNivel2::solicitarMenuPrincipal);
 
     // Temporizador del juego
     temporizador = new QTimer(this);
@@ -472,25 +495,40 @@ void VistaNivel2::keyReleaseEvent(QKeyEvent *evento)
 
 void VistaNivel2::alternarPausa()
 {
+    // No se puede pausar una partida que ya termino
+    if (partidaTerminada)
+    {
+        return;
+    }
+
     partidaPausada = !partidaPausada;
+
+    // Soltamos las teclas para que Dexter no siga caminando solo
+    arribaPresionada = false;
+    abajoPresionada = false;
+    izquierdaPresionada = false;
+    derechaPresionada = false;
 
     if (partidaPausada)
     {
         temporizador->stop();
         fondoPausa->show();
         textoPausa->show();
+        botonContinuar->show();
+        botonSalirMenu->show();
     }
     else
     {
-        // Soltamos las teclas para que Dexter no siga caminando solo
-        arribaPresionada = false;
-        abajoPresionada = false;
-        izquierdaPresionada = false;
-        derechaPresionada = false;
-
-        temporizador->start(16);
         fondoPausa->hide();
         textoPausa->hide();
+        botonContinuar->hide();
+        botonSalirMenu->hide();
+
+        // Al hacer clic en el boton, el foco se va al boton;
+        // lo devolvemos a la vista para que el teclado funcione
+        setFocus();
+
+        temporizador->start(16);
     }
 }
 
@@ -505,7 +543,7 @@ void VistaNivel2::finalizarPartida()
     temporizador->stop();
 
     // Mismo estilo de mensaje que el nivel 1
-    escena->addRect(340, 260, 600, 180,
+    escena->addRect(340, 210, 600, 280,
                     QPen(QColor(140, 170, 112), 3),
                     QBrush(QColor(38, 59, 52)))->setZValue(30);
 
@@ -519,7 +557,17 @@ void VistaNivel2::finalizarPartida()
     QGraphicsTextItem *mensaje = escena->addText(resultado);
     mensaje->setFont(QFont("Consolas", 28, QFont::Bold));
     mensaje->setDefaultTextColor(QColor(255, 245, 217));
-    mensaje->setPos((1280 - mensaje->boundingRect().width()) / 2,
-                    (700 - mensaje->boundingRect().height()) / 2);
+    mensaje->setPos((1280 - mensaje->boundingRect().width()) / 2, 260);
     mensaje->setZValue(31);
+
+    // Boton para volver al menu principal
+    QPushButton *regresar = new QPushButton("VOLVER AL MENU PRINCIPAL");
+    regresar->setFixedSize(360, 50);
+    regresar->setFont(QFont("Consolas", 14, QFont::Bold));
+
+    QGraphicsProxyWidget *botonRegresar = escena->addWidget(regresar);
+    botonRegresar->setPos(460, 390);
+    botonRegresar->setZValue(31);
+
+    connect(regresar, &QPushButton::clicked, this, &VistaNivel2::solicitarMenuPrincipal);
 }
