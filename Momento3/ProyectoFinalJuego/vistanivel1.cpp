@@ -111,23 +111,56 @@ VistaNivel1::VistaNivel1(bool dificultad): nivel(dificultad)
 
     // Creamos el fondo de pausa
     fondoPausa = escena->addRect(
-        340, 260, 600, 180,
+        340, 210, 600, 280,
         QPen(QColor(140, 170, 112), 3),
         QBrush(QColor(38, 59, 52))
         );
+
     fondoPausa->setZValue(30);
     fondoPausa->hide();
-    // Creamos el mensaje de pausa
-    textoPausa = escena->addText(
-        "PARTIDA PAUSADA\nESC para continuar");
+    // Creamos el titulo de pausa
+    textoPausa = escena->addText("PARTIDA PAUSADA");
     textoPausa->setFont(
-        QFont("Consolas", 24, QFont::Bold));
+        QFont("Consolas", 28, QFont::Bold));
     textoPausa->setDefaultTextColor(
         QColor(255, 245, 217));
-    // Centramos el mensaje
-    textoPausa->setPos((1280 - textoPausa->boundingRect().width()) / 2, (700 - textoPausa->boundingRect().height()) / 2);
+    textoPausa->setPos(
+        (1280 - textoPausa->boundingRect().width()) / 2,
+        230
+        );
     textoPausa->setZValue(31);
     textoPausa->hide();
+    // Creamos el boton continuar
+    QPushButton *continuar =
+        new QPushButton("CONTINUAR JUGANDO");
+    continuar->setFixedSize(360, 50);
+    continuar->setFont(
+        QFont("Consolas", 14, QFont::Bold));
+
+    // Agregamos el boton a la escena
+    botonContinuar = escena->addWidget(continuar);
+    botonContinuar->setPos(460, 315);
+    botonContinuar->setZValue(31);
+    botonContinuar->hide();
+
+    // Creamos el boton para salir al menu
+    QPushButton *salir =
+        new QPushButton("SALIR AL MENU PRINCIPAL");
+    salir->setFixedSize(360, 50);
+    salir->setFont(
+        QFont("Consolas", 14, QFont::Bold));
+
+    // Agregamos el boton a la escena
+    botonSalirMenu = escena->addWidget(salir);
+    botonSalirMenu->setPos(460, 390);
+    botonSalirMenu->setZValue(31);
+    botonSalirMenu->hide();
+
+    // Conectamos los botones
+    connect(continuar, &QPushButton::clicked,
+            this, &VistaNivel1::alternarPausa);
+    connect(salir, &QPushButton::clicked,
+            this, &VistaNivel1::solicitarMenuPrincipal);
 
     // Creamos el temporizador
     temporizador = new QTimer(this);
@@ -898,7 +931,7 @@ void VistaNivel1::finalizarPartida()
 
     // Fondo del mensaje de finalizacion
     escena->addRect(
-              340, 260, 600, 180,
+              340, 210, 600, 280,
               QPen(QColor(140, 170, 112), 3),
               QBrush(QColor(38, 59, 52))
               )->setZValue(30);
@@ -932,10 +965,30 @@ void VistaNivel1::finalizarPartida()
     // Centramos el mensaje
     mensaje->setPos(
         (1280 - mensaje->boundingRect().width()) / 2,
-        (700 - mensaje->boundingRect().height()) / 2
+        260
         );
 
     mensaje->setZValue(31);
+
+    // Creamos el boton para regresar al menu principal
+    QPushButton *regresar =
+        new QPushButton("VOLVER AL MENU PRINCIPAL");
+
+    regresar->setFixedSize(360, 50);
+
+    regresar->setFont(
+        QFont("Consolas", 14, QFont::Bold));
+
+    // Incorporamos el boton a la escena
+    QGraphicsProxyWidget *botonRegresar =
+        escena->addWidget(regresar);
+
+    botonRegresar->setPos(460, 390);
+    botonRegresar->setZValue(31);
+
+    // Reutilizamos la señal de navegacion
+    connect(regresar, &QPushButton::clicked,
+            this, &VistaNivel1::solicitarMenuPrincipal);
 }
 
 void VistaNivel1::cargarSpritesBeneficios()
@@ -1472,25 +1525,34 @@ void VistaNivel1::alternarPausa()
     {
         return;
     }
-
-    // Cambiamos el estado de pausa
     partidaPausada = !partidaPausada;
+
+    // Reiniciamos el estado de las teclas
+    izquierdaPresionada = false;
+    derechaPresionada = false;
+    saltarPresionado = false;
 
     if (partidaPausada)
     {
-        // Detenemos todas las actualizaciones
         temporizador->stop();
 
         fondoPausa->show();
         textoPausa->show();
+
+        botonContinuar->show();
+        botonSalirMenu->show();
     }
     else
     {
-        // Ocultamos el mensaje
         fondoPausa->hide();
         textoPausa->hide();
 
-        // Reanudamos las actualizaciones
+        botonContinuar->hide();
+        botonSalirMenu->hide();
+
+        // Recuperamos el control del teclado
+        setFocus();
+
         temporizador->start();
     }
 }

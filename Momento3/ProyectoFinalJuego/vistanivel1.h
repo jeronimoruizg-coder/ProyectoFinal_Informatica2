@@ -14,12 +14,16 @@
 #include <QGraphicsRectItem>
 #include <QFont>
 #include <QGraphicsColorizeEffect>
+#include <QPushButton>
+#include <QGraphicsProxyWidget>
 
 using namespace std;
 
 class VistaNivel1 : public QGraphicsView
 {
+     Q_OBJECT
 private:
+
     Nivel1 nivel;
     QGraphicsScene *escena;
 //--------------------------------------------------- Dexter -----------------------------------//
@@ -182,12 +186,18 @@ private:
     // Elementos graficos de la pausa
     QGraphicsRectItem *fondoPausa;
     QGraphicsTextItem *textoPausa;
+    // Botones graficos del menu de pausa
+    QGraphicsProxyWidget *botonContinuar;
+    QGraphicsProxyWidget *botonSalirMenu;
 
     // Control de la pausa
     void alternarPausa();
 
 public:
     VistaNivel1(bool dificultad = false);
+signals:
+
+    void solicitarMenuPrincipal();
 
 protected:
     void keyPressEvent(QKeyEvent *evento);

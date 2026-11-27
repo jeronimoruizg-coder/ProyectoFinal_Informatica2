@@ -129,14 +129,19 @@ void MainWindow::mostrarMenuPrincipal()
 
 void MainWindow::iniciarNivel1(bool dificultad)
 {
-    // Creamos el nivel con la dificultad seleccionada
     VistaNivel1 *vistaNivel1 =
         new VistaNivel1(dificultad);
+
+    // Conectamos la solicitud de regresar al menu
+    connect(vistaNivel1,
+            &VistaNivel1::solicitarMenuPrincipal,
+            this,
+            &MainWindow::mostrarMenuPrincipal,
+            Qt::QueuedConnection);
 
     // Mostramos el nivel
     setCentralWidget(vistaNivel1);
 
-    // Permitimos recibir las acciones del teclado
     vistaNivel1->setFocus();
 }
 
