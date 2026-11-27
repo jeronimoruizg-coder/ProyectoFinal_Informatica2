@@ -99,12 +99,21 @@ public:
     int getMirandoX() const;
     int getMirandoY() const;
 
+    // Empujon del armadillo (impulso con amortiguamiento)
+    void aplicarImpulso(float impulsoHorizontal, float impulsoVertical);
+    void moverPorImpulso(float intervaloTiempo, Mapa &mapa);
+    void detenerImpulso();
+
 private:
     // Atributos del nivel 2
     float tiempoPistola;
     float recargaDisparo;
     int mirandoX;
     int mirandoY;
+
+    // Velocidad del empujon (pixeles por segundo)
+    float impulsoX;
+    float impulsoY;
 };
 
 #endif // DEXTER_H

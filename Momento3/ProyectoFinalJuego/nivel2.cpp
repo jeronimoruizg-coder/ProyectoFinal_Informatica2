@@ -25,7 +25,6 @@ void Nivel2::reiniciar()
     eliminarBeneficiosYDisparos();
     mapa.reiniciar();
     dexter.iniciarNivel2();
-    tiempoAturdido = 0;
     crearEnemigos();
     crearBeneficios();
 }
@@ -38,15 +37,9 @@ void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
         return;
     }
 
-    // Despues del golpe del armadillo Dexter no se puede mover un momento
-    if (tiempoAturdido > 0)
-    {
-        tiempoAturdido -= intervaloTiempo;
-    }
-    else
-    {
-        moverDexter(dirX, dirY, intervaloTiempo);
-    }
+    moverDexter(dirX, dirY, intervaloTiempo);
+    empujarDexter(intervaloTiempo);
+
     dexter.actualizarInvulnerabilidad(intervaloTiempo);
     dexter.actualizarPoderes(intervaloTiempo);
 
@@ -56,6 +49,7 @@ void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
     actualizarNieblas(intervaloTiempo);
     actualizarArmadillos(intervaloTiempo);
     actualizarMonos(intervaloTiempo);
+
     revisarPuerta();
 }
 
@@ -330,15 +324,48 @@ void Nivel2::actualizarArmadillos(float intervaloTiempo)
             int vidasAntes = dexter.getVidas();
             dexter.recibirDano();
 
-            // Si el golpe si le quito vida, queda aturdido 1 segundo
+            // Si el golpe si le quito vida, lo empuja lejos del armadillo
             if (dexter.getVidas() < vidasAntes)
             {
-                tiempoAturdido = 1;
+                float distanciaX = (dexter.getX() + dexter.getAncho() / 2) -
+                                   (armadillo->getX() + armadillo->getAncho() / 2);
+                float distanciaY = (dexter.getY() + dexter.getAlto() / 2) -
+                                   (armadillo->getY() + armadillo->getAlto() / 2);
+
+                // Lo empuja en el eje donde estan mas separados
+                const float FUERZA_GOLPE = 500;
+                if (distanciaX * distanciaX >= distanciaY * distanciaY)
+                {
+                    if (distanciaX >= 0) dexter.aplicarImpulso(FUERZA_GOLPE, 0);
+                    else dexter.aplicarImpulso(-FUERZA_GOLPE, 0);
+                }
+                else
+                {
+                    if (distanciaY >= 0) dexter.aplicarImpulso(0, FUERZA_GOLPE);
+                    else dexter.aplicarImpulso(0, -FUERZA_GOLPE);
+                }
             }
 
             if (armadillo->estaEmbistiendo())
             {
                 armadillo->terminarEmbestida();
+            }
+        }
+
+        // Si viene embistiendo y se lleva por delante al mono, tambien lo mata
+        if (armadillo->estaVivo() && armadillo->estaEmbistiendo())
+        {
+            for (int m = 0; m < (int)monos.size(); m++)
+            {
+                Mono *mono = monos[m];
+
+                if (mono->estaVivo() &&
+                    seTocan(armadillo->getX(), armadillo->getY(), armadillo->getAncho(), armadillo->getAlto(),
+                            mono->getX(), mono->getY(), mono->getAncho(), mono->getAlto()))
+                {
+                    mono->morir();
+                    armadillo->terminarEmbestida();
+                }
             }
         }
 
@@ -656,4 +683,30 @@ const std::vector<Beneficios*> &Nivel2::getBeneficios() const
 const std::vector<DisparoVeneno*> &Nivel2::getDisparos() const
 {
     return disparos;
+}
+
+//--------------------------------------------------- Empujon ----------------------------------//
+
+// Mueve a Dexter con el impulso del golpe. Si el empujon lo mete
+// en una bomba solida, lo devolvemos y el empujon se acaba
+void Nivel2::empujarDexter(float intervaloTiempo)
+{
+    float anteriorX = dexter.getX();
+    float anteriorY = dexter.getY();
+
+    dexter.moverPorImpulso(intervaloTiempo, mapa);
+
+    if (dexterChocaConBomba())
+    {
+        dexter.setPosicion(anteriorX, anteriorY);
+        dexter.detenerImpulso();
+    }
+}
+
+// Dos rectangulos se cruzan si se solapan en X y en Y a la vez
+bool Nivel2::seTocan(float x1, float y1, int ancho1, int alto1,
+                     float x2, float y2, int ancho2, int alto2)
+{
+    return x1 < x2 + ancho2 && x2 < x1 + ancho1 &&
+           y1 < y2 + alto2 && y2 < y1 + alto1;
 }
