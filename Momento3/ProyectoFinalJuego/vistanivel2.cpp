@@ -11,6 +11,7 @@ VistaNivel2::VistaNivel2(bool dificultad): nivel(dificultad)
     izquierdaPresionada = false;
     derechaPresionada = false;
     partidaPausada = false;
+    partidaTerminada = false;
 
     escena = new QGraphicsScene(this);
     escena->setSceneRect(0, 0, 1280, 720);
@@ -80,6 +81,26 @@ void VistaNivel2::crearMapa()
     }
 }
 
+// Repinta las casillas que cambiaron (paredes rotas o puerta abierta)
+void VistaNivel2::actualizarMapaGrafico()
+{
+    Mapa &mapa = nivel.getMapa();
+
+    for (int f = 0; f < Mapa::FILAS; f++)
+    {
+        for (int c = 0; c < Mapa::COLUMNAS; c++)
+        {
+            QColor nuevoColor = colorCasilla(mapa.getCasilla(f, c));
+
+            // Solo cambiamos el color si es distinto al actual
+            if (figurasCasillas[f][c]->brush().color() != nuevoColor)
+            {
+                figurasCasillas[f][c]->setBrush(QBrush(nuevoColor));
+            }
+        }
+    }
+}
+
 QColor VistaNivel2::colorCasilla(int tipo)
 {
     if (tipo == Mapa::PARED_FIJA)
@@ -131,10 +152,107 @@ void VistaNivel2::actualizarContadorVidas()
     }
 }
 
+//--------------------------------------------------- Bombas -----------------------------------//
+
+void VistaNivel2::actualizarBombasGraficas()
+{
+    const std::vector<Bomba*> &bombas = nivel.getBombas();
+    int tam = Mapa::TAM_CASILLA;
+
+    // Creamos figuras si hay mas bombas que figuras
+    while (figurasBombas.size() < bombas.size())
+    {
+        QGraphicsEllipseItem *figura = escena->addEllipse(
+            0, 0, tam - 12, tam - 12, QPen(Qt::black), QBrush(QColor(20, 20, 20)));
+        figura->setZValue(5);
+        figurasBombas.push_back(figura);
+    }
+
+    // Borramos las figuras que sobran
+    while (figurasBombas.size() > bombas.size())
+    {
+        delete figurasBombas.back();
+        figurasBombas.pop_back();
+    }
+
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        // Cuando explota, la bomba ya no se dibuja (se ve el fuego)
+        if (bombas[i]->haExplotado())
+        {
+            figurasBombas[i]->hide();
+            continue;
+        }
+
+        figurasBombas[i]->show();
+        figurasBombas[i]->setPos(MARGEN_X + bombas[i]->getX() + 6,
+                                 MARGEN_Y + bombas[i]->getY() + 6);
+
+        // En el ultimo segundo parpadea en rojo para avisar
+        bool parpadeo = bombas[i]->getTiempoMecha() < 1 &&
+                        int(bombas[i]->getTiempoMecha() * 8) % 2 == 0;
+
+        if (parpadeo)
+        {
+            figurasBombas[i]->setBrush(QBrush(QColor(200, 30, 30)));
+        }
+        else
+        {
+            figurasBombas[i]->setBrush(QBrush(QColor(20, 20, 20)));
+        }
+    }
+}
+
+void VistaNivel2::actualizarFuegoGrafico()
+{
+    const std::vector<Bomba*> &bombas = nivel.getBombas();
+    int tam = Mapa::TAM_CASILLA;
+
+    // Contamos cuantas casillas con fuego hay en total
+    int totalFuego = 0;
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        totalFuego += bombas[i]->getCantidadFuego();
+    }
+
+    // Ajustamos la cantidad de figuras de fuego
+    while ((int)figurasFuego.size() < totalFuego)
+    {
+        QGraphicsRectItem *figura = escena->addRect(
+            0, 0, tam, tam, QPen(Qt::NoPen), QBrush(QColor(255, 140, 0, 200)));
+        figura->setZValue(6);
+        figurasFuego.push_back(figura);
+    }
+
+    while ((int)figurasFuego.size() > totalFuego)
+    {
+        delete figurasFuego.back();
+        figurasFuego.pop_back();
+    }
+
+    // Ponemos cada figura en su casilla
+    int indice = 0;
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        for (int k = 0; k < bombas[i]->getCantidadFuego(); k++)
+        {
+            figurasFuego[indice]->setPos(MARGEN_X + bombas[i]->getColumnaFuego(k) * tam,
+                                         MARGEN_Y + bombas[i]->getFilaFuego(k) * tam);
+            indice++;
+        }
+    }
+}
+
 //-------------------------------------------------- Juego y teclado -------------------------//
 
 void VistaNivel2::actualizarJuego()
 {
+    if (partidaTerminada)
+    {
+        return;
+    }
+
+    // Convertimos las teclas presionadas en una direccion
     int dirX = 0;
     int dirY = 0;
 
@@ -143,16 +261,25 @@ void VistaNivel2::actualizarJuego()
     if (arribaPresionada) dirY--;
     if (abajoPresionada) dirY++;
 
+    // La logica avanza y luego dibujamos lo que quedo
     nivel.actualizar(dirX, dirY, 0.016);
 
+    actualizarMapaGrafico();
     actualizarDexter();
+    actualizarBombasGraficas();
+    actualizarFuegoGrafico();
     actualizarContadorVidas();
+
+    if (nivel.haPerdido())
+    {
+        finalizarPartida();
+    }
 }
 
 void VistaNivel2::keyPressEvent(QKeyEvent *evento)
 {
     // Ignoramos las repeticiones automaticas del teclado
-    if (evento->isAutoRepeat())
+    if (evento->isAutoRepeat() || partidaTerminada)
     {
         return;
     }
@@ -172,6 +299,7 @@ void VistaNivel2::keyPressEvent(QKeyEvent *evento)
     else if (evento->key() == Qt::Key_S) abajoPresionada = true;
     else if (evento->key() == Qt::Key_A) izquierdaPresionada = true;
     else if (evento->key() == Qt::Key_D) derechaPresionada = true;
+    else if (evento->key() == Qt::Key_Space) nivel.ponerBomba();
     else QGraphicsView::keyPressEvent(evento);
 }
 
@@ -213,4 +341,27 @@ void VistaNivel2::alternarPausa()
         fondoPausa->hide();
         textoPausa->hide();
     }
+}
+
+void VistaNivel2::finalizarPartida()
+{
+    if (partidaTerminada)
+    {
+        return;
+    }
+
+    partidaTerminada = true;
+    temporizador->stop();
+
+    // Mismo estilo de mensaje que el nivel 1
+    escena->addRect(340, 260, 600, 180,
+                    QPen(QColor(140, 170, 112), 3),
+                    QBrush(QColor(38, 59, 52)))->setZValue(30);
+
+    QGraphicsTextItem *mensaje = escena->addText("¡HAS PERDIDO!");
+    mensaje->setFont(QFont("Consolas", 28, QFont::Bold));
+    mensaje->setDefaultTextColor(QColor(255, 245, 217));
+    mensaje->setPos((1280 - mensaje->boundingRect().width()) / 2,
+                    (700 - mensaje->boundingRect().height()) / 2);
+    mensaje->setZValue(31);
 }
