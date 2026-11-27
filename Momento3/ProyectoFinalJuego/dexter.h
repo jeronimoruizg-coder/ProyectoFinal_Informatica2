@@ -82,6 +82,7 @@ public:
 
 //------------------------------------------------ nivel 2 ------------------------------------//
     void iniciarNivel2();
+    void setPosicion(float nuevaX, float nuevaY);
 };
 
 #endif // DEXTER_H

@@ -18,6 +18,10 @@ private:
     // Cuantas casillas avanza el fuego hacia cada lado
     int alcance;
 
+    // Dexter esta encima de la bomba al ponerla; mientras no salga,
+    // la bomba no lo bloquea
+    bool dexterEncima;
+
     // Etapa de explosion (igual que la semilla del nivel 1)
     bool explotada;
     float tiempoExplosion;
@@ -52,6 +56,11 @@ public:
     int getFila() const;
     int getColumna() const;
     float getTiempoMecha() const;
+
+    // La bomba es solida mientras no explote y Dexter ya se haya bajado
+    bool esSolidaParaDexter() const;
+    bool estaDexterEncima() const;
+    void dexterSeBajo();
 };
 
 #endif // BOMBA_H

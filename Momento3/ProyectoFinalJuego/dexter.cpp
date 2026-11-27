@@ -365,3 +365,11 @@ void Dexter::iniciarNivel2() //Modificamos los atributos de dexter para el laber
     tiempoRalentizacion = 0;
 
 }
+
+
+// Permite devolver a Dexter cuando choca con una bomba
+void Dexter::setPosicion(float nuevaX, float nuevaY)
+{
+    x = nuevaX;
+    y = nuevaY;
+}
