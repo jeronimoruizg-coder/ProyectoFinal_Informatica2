@@ -31,7 +31,7 @@ private:
 public:
     Dexter();
 
-    void mover(int dirX, int dirY, Mapa &mapa);
+    void mover(int dirX, int dirY, float intervaloTiempo, Mapa &mapa);
 
     float getX();
     float getY();
@@ -79,6 +79,9 @@ public:
     void ralentizar();
     void actualizarRalentizacion(float intervaloTiempo);
     bool estaRalentizado() const;
+
+//------------------------------------------------ nivel 2 ------------------------------------//
+    void iniciarNivel2();
 };
 
 #endif // DEXTER_H
