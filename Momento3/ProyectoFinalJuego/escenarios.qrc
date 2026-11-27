@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<RCC>
+  <qresource prefix="/sprites/escenarios">
+    <file alias="fondo_nivel1.png">escenarios/fondo_nivel1.png</file>
+  </qresource>
+</RCC>

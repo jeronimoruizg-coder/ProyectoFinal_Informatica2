@@ -2,12 +2,13 @@
 #include "./ui_mainwindow.h"
 #include "vistanivel1.h"
 #include "vistanivel2.h"
+
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
-#include <QComboBox>
-#include <QVBoxLayout>
-#include <QMessageBox>
+#include <QPixmap>
+#include <QIcon>
+#include <QFont>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,110 +26,107 @@ MainWindow::~MainWindow()
 
 void MainWindow::mostrarMenuPrincipal()
 {
-    // Creamos el contenedor principal
     QWidget *menu = new QWidget(this);
+    menu->setFixedSize(1280, 720);
 
-    // Organizamos los elementos verticalmente
-    QVBoxLayout *distribucion = new QVBoxLayout(menu);
+    // Opciones iniciales
+    nivelSeleccionado = 1;
+    dificultadSeleccionada = false;
 
-    // Titulo del juego
-    QLabel *titulo = new QLabel(
-        "EL LABORATORIO BOTANICO DE DEXTER", menu);
+    // Fondo del menu
+    QLabel *fondo = new QLabel(menu);
 
-    titulo->setAlignment(Qt::AlignCenter);
+    fondo->setPixmap(
+        QPixmap(":/sprites/menu/fondo_menu.png"));
 
-    titulo->setFont(
-        QFont("Consolas", 28, QFont::Bold));
+    fondo->setGeometry(0, 0, 1280, 720);
 
-    // Seleccion del nivel
-    QLabel *textoNivel = new QLabel(
-        "Selecciona el nivel", menu);
+    // Panel de nivel
+    QLabel *panelNivel = new QLabel(menu);
 
-    selectorNivel = new QComboBox(menu);
+    panelNivel->setPixmap(
+        QPixmap(":/sprites/menu/selector_nivel.png"));
 
-    selectorNivel->addItem("Nivel 1");
-    selectorNivel->addItem("Nivel 2");
+    panelNivel->setGeometry(479, 274, 322, 86);
 
-    // Seleccion de dificultad
-    QLabel *textoDificultad = new QLabel(
-        "Selecciona la dificultad", menu);
+    // Panel de dificultad
+    QLabel *panelDificultad = new QLabel(menu);
 
-    selectorDificultad = new QComboBox(menu);
+    panelDificultad->setPixmap(
+        QPixmap(":/sprites/menu/selector_dificultad.png"));
 
-    selectorDificultad->addItem("Normal");
-    selectorDificultad->addItem("Dificil");
+    panelDificultad->setGeometry(478, 367, 323, 86);
 
-    // Botones del menu
-    QPushButton *botonJugar =
-        new QPushButton("JUGAR", menu);
+    // Texto del nivel
+    textoNivel = new QLabel("Nivel 1", menu);
 
-    QPushButton *botonSalir =
-        new QPushButton("SALIR", menu);
+    textoNivel->setGeometry(550, 311, 180, 36);
+    textoNivel->setAlignment(Qt::AlignCenter);
+    textoNivel->setFont(QFont("Arial", 19, QFont::Bold));
+    textoNivel->setStyleSheet("color: white;");
 
-    // Organizamos los elementos
-    distribucion->addStretch();
+    // Texto de la dificultad
+    textoDificultad = new QLabel("Normal", menu);
 
-    distribucion->addWidget(titulo);
-    distribucion->addSpacing(40);
+    textoDificultad->setGeometry(550, 404, 180, 36);
+    textoDificultad->setAlignment(Qt::AlignCenter);
+    textoDificultad->setFont(QFont("Arial", 19, QFont::Bold));
+    textoDificultad->setStyleSheet("color: white;");
 
-    distribucion->addWidget(textoNivel);
-    distribucion->addWidget(selectorNivel);
+    // Flechas para seleccionar el nivel
+    QPushButton *nivelIzquierda = crearBotonGrafico(
+        menu, ":/sprites/menu/flecha_izquierda.png",
+        499, 303);
 
-    distribucion->addSpacing(15);
+    QPushButton *nivelDerecha = crearBotonGrafico(
+        menu, ":/sprites/menu/flecha_derecha.png",
+        751, 303);
 
-    distribucion->addWidget(textoDificultad);
-    distribucion->addWidget(selectorDificultad);
+    // Flechas para seleccionar la dificultad
+    QPushButton *dificultadIzquierda = crearBotonGrafico(
+        menu, ":/sprites/menu/flecha_izquierda.png",
+        499, 396);
 
-    distribucion->addSpacing(30);
+    QPushButton *dificultadDerecha = crearBotonGrafico(
+        menu, ":/sprites/menu/flecha_derecha.png",
+        751, 396);
 
-    distribucion->addWidget(botonJugar);
-    distribucion->addWidget(botonSalir);
+    // Botones principales
+    QPushButton *botonJugar = crearBotonGrafico(
+        menu, ":/sprites/menu/boton_jugar.png",
+        455, 459);
 
-    distribucion->addStretch();
+    QPushButton *botonSalir = crearBotonGrafico(
+        menu, ":/sprites/menu/boton_salir.png",
+        470, 563);
 
-    // Limitamos el ancho de los controles
-    textoNivel->setFixedWidth(300);
-    selectorNivel->setFixedWidth(300);
+    // Conexiones de las flechas
+    connect(nivelIzquierda, &QPushButton::clicked,
+            this, &MainWindow::cambiarNivel);
 
-    textoDificultad->setFixedWidth(300);
-    selectorDificultad->setFixedWidth(300);
+    connect(nivelDerecha, &QPushButton::clicked,
+            this, &MainWindow::cambiarNivel);
 
-    botonJugar->setFixedSize(300, 50);
-    botonSalir->setFixedSize(300, 50);
+    connect(dificultadIzquierda, &QPushButton::clicked,
+            this, &MainWindow::cambiarDificultad);
 
-    // Centramos los controles
-    distribucion->setAlignment(
-        textoNivel, Qt::AlignHCenter);
+    connect(dificultadDerecha, &QPushButton::clicked,
+            this, &MainWindow::cambiarDificultad);
 
-    distribucion->setAlignment(
-        selectorNivel, Qt::AlignHCenter);
-
-    distribucion->setAlignment(
-        textoDificultad, Qt::AlignHCenter);
-
-    distribucion->setAlignment(
-        selectorDificultad, Qt::AlignHCenter);
-
-    distribucion->setAlignment(
-        botonJugar, Qt::AlignHCenter);
-
-    distribucion->setAlignment(
-        botonSalir, Qt::AlignHCenter);
-
-    // Conectamos el boton salir
-    connect(botonSalir, &QPushButton::clicked,
-            this, &MainWindow::close);
-
-    // Conectamos el boton jugar
+    // Conexiones de los botones principales
     connect(botonJugar, &QPushButton::clicked,
             this, &MainWindow::jugar);
 
-    // Mostramos el menu
+    connect(botonSalir, &QPushButton::clicked,
+            this, &MainWindow::close);
+
     setCentralWidget(menu);
 }
 
 void MainWindow::iniciarNivel1(bool dificultad)
 {
+    dificultadSeleccionada = dificultad;//Garantizamos que la dificultad seleccionada actue en ambos niveles
+
     VistaNivel1 *vistaNivel1 =
         new VistaNivel1(dificultad);
 
@@ -138,6 +136,15 @@ void MainWindow::iniciarNivel1(bool dificultad)
             this,
             &MainWindow::mostrarMenuPrincipal,
             Qt::QueuedConnection);
+
+
+    // Conectamos la solicitud de avanzar al nivel 2
+    connect(vistaNivel1,
+            &VistaNivel1::solicitarSiguienteNivel,
+            this,
+            &MainWindow::avanzarAlNivel2,
+            Qt::QueuedConnection);
+
 
     // Mostramos el nivel
     setCentralWidget(vistaNivel1);
@@ -160,17 +167,81 @@ void MainWindow::iniciarNivel2(bool dificultad)
 
 void MainWindow::jugar()
 {
-    // Consultamos la dificultad seleccionada
-    bool dificultad =
-        selectorDificultad->currentIndex() == 1;
-
-    // Consultamos el nivel seleccionado
-    if (selectorNivel->currentIndex() == 0)
+    // Iniciamos el nivel con la dificultad seleccionada
+    if (nivelSeleccionado == 1)
     {
-        iniciarNivel1(dificultad);
+        iniciarNivel1(dificultadSeleccionada);
     }
     else
     {
-        iniciarNivel2(dificultad);
+        iniciarNivel2(dificultadSeleccionada);
     }
+}
+
+QPushButton *MainWindow::crearBotonGrafico(
+    QWidget *padre, const QString &ruta,
+    int x, int y)
+{
+    // Cargamos la imagen del boton
+    QPixmap imagen(ruta);
+
+    // Creamos un boton asociado al menu
+    QPushButton *boton = new QPushButton(padre);
+
+    // Utilizamos la imagen como icono
+    boton->setIcon(QIcon(imagen));
+    boton->setIconSize(imagen.size());
+
+    // Conservamos las dimensiones originales
+    boton->setFixedSize(imagen.size());
+
+    // Ubicamos el boton
+    boton->move(x, y);
+
+    // Eliminamos la apariencia predeterminada de Qt
+    boton->setStyleSheet(
+        "QPushButton {"
+        "background: transparent;"
+        "border: none;"
+        "padding: 0px;"
+        "}"
+        );
+
+    boton->setCursor(Qt::PointingHandCursor);
+
+    return boton;
+}
+
+void MainWindow::cambiarNivel()
+{
+    if (nivelSeleccionado == 1)
+    {
+        nivelSeleccionado = 2;
+        textoNivel->setText("Nivel 2");
+    }
+    else
+    {
+        nivelSeleccionado = 1;
+        textoNivel->setText("Nivel 1");
+    }
+}
+
+
+void MainWindow::cambiarDificultad()
+{
+    dificultadSeleccionada = !dificultadSeleccionada;
+
+    if (dificultadSeleccionada)
+    {
+        textoDificultad->setText("Difícil");
+    }
+    else
+    {
+        textoDificultad->setText("Normal");
+    }
+}
+//------------------------------ Avanzar el nivel 2 despues de ganar ----------------------//
+void MainWindow::avanzarAlNivel2()
+{
+    iniciarNivel2(dificultadSeleccionada);
 }
