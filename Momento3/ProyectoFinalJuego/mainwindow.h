@@ -27,6 +27,7 @@ private:
     // Funciones de navegacion
     void mostrarMenuPrincipal();
     void iniciarNivel1(bool dificultad);
+    void iniciarNivel2(bool dificultad);
     void jugar();
 };
 #endif // MAINWINDOW_H
