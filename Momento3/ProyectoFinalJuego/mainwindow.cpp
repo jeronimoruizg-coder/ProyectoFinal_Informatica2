@@ -158,6 +158,13 @@ void MainWindow::iniciarNivel2(bool dificultad)
     VistaNivel2 *vistaNivel2 =
         new VistaNivel2(dificultad);
 
+    // Conectamos la solicitud de regresar al menu
+    connect(vistaNivel2,
+            &VistaNivel2::solicitarMenuPrincipal,
+            this,
+            &MainWindow::mostrarMenuPrincipal,
+            Qt::QueuedConnection);
+
     // Mostramos el nivel
     setCentralWidget(vistaNivel2);
 
