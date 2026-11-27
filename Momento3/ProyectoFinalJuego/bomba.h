@@ -31,10 +31,24 @@ private:
     std::vector<int> filasFuego;
     std::vector<int> columnasFuego;
 
+
+    // Datos de la semilla explosiva que lanza el mono
+    bool esSemilla;
+    int filaOrigen, columnaOrigen;   // desde donde la lanzaron
+    int opcionUsada;                 // estrategia de la inteligencia
+
     void agregarFuego(int filaFuego, int columnaFuego);
 
 public:
     Bomba(int filaInicial, int columnaInicial);
+
+    // Tiempos de la semilla del mono
+    static constexpr float DURACION_VUELO = 0.5;
+    static constexpr float TIEMPO_EN_SUELO = 2.5;
+
+    // Constructor para la semilla del mono (sobrecarga de constructores)
+    Bomba(int filaDestino, int columnaDestino, int filaLanzamiento,
+          int columnaLanzamiento, int opcion);
 
     // Metodo heredado de Objetos
     void actualizar() override;
@@ -61,6 +75,15 @@ public:
     bool esSolidaParaDexter() const;
     bool estaDexterEncima() const;
     void dexterSeBajo();
+
+    int getAlcance() const;
+
+    // Consultas de la semilla del mono
+    bool esSemillaDelMono() const;
+    int getOpcionUsada() const;
+    int getFilaOrigen() const;
+    int getColumnaOrigen() const;
+    float getProgresoVuelo() const;
 };
 
 #endif // BOMBA_H

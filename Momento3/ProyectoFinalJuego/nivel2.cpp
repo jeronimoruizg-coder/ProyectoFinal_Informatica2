@@ -2,7 +2,8 @@
 #include <cstdlib>
 #include <ctime>
 
-Nivel2::Nivel2(bool dificultad)
+// La inteligencia del mono tiene 3 estrategias de ataque
+Nivel2::Nivel2(bool dificultad): inteligenciaMono(3)
 {
     dificil = dificultad;
     // Numeros aleatorios para el recorrido de los armadillos
@@ -39,6 +40,7 @@ void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
     actualizarBombas(intervaloTiempo);
     actualizarNieblas(intervaloTiempo);
     actualizarArmadillos(intervaloTiempo);
+    actualizarMonos(intervaloTiempo);
     revisarPuerta();
 }
 
@@ -52,7 +54,8 @@ void Nivel2::ponerBomba()
     for (int i = 0; i < (int)bombas.size(); i++)
     {
         // Solo se puede tener una bomba con la mecha encendida
-        if (!bombas[i]->haExplotado())
+        // (las semillas del mono no cuentan)
+        if (!bombas[i]->haExplotado() && !bombas[i]->esSemillaDelMono())
         {
             return;
         }
@@ -76,7 +79,7 @@ void Nivel2::actualizarBombas(float intervaloTiempo)
 
         if (bombas[i]->debeExplotar())
         {
-            bombas[i]->explotar(mapa);
+            explotarBomba(i);
         }
     }
 
@@ -86,7 +89,7 @@ void Nivel2::actualizarBombas(float intervaloTiempo)
         if (!bombas[i]->haExplotado() &&
             hayFuegoEnCasilla(bombas[i]->getFila(), bombas[i]->getColumna()))
         {
-            bombas[i]->explotar(mapa);
+            explotarBomba(i);
         }
     }
 
@@ -156,6 +159,20 @@ bool Nivel2::dexterChocaConBomba()
     return false;
 }
 
+// Hace explotar una bomba. Si era una semilla del mono,
+// la inteligencia aprende si le pego a Dexter o no
+void Nivel2::explotarBomba(int indice)
+{
+    Bomba *bomba = bombas[indice];
+    bomba->explotar(mapa);
+
+    if (bomba->esSemillaDelMono())
+    {
+        bool acerto = bomba->hayFuegoEn(getFilaDexter(), getColumnaDexter());
+        inteligenciaMono.registrarResultado(bomba->getOpcionUsada(), acerto);
+    }
+}
+
 void Nivel2::eliminarBomba(int indice)
 {
     delete bombas[indice];
@@ -211,11 +228,20 @@ void Nivel2::crearEnemigos()
     // Armadillo(fila, columna)
     armadillos.push_back(new Armadillo(11, 13));
 
+    // Mono(fila, columna)
+    monos.push_back(new Mono(9, 11));
+
     // En dificil aparece una niebla y un armadillo mas
     if (dificil)
     {
         nieblas.push_back(new Niebla(9, 2, true, 10));
         armadillos.push_back(new Armadillo(7, 13));
+    }
+
+    // Cada mono arranca con una estrategia elegida por la inteligencia
+    for (int i = 0; i < (int)monos.size(); i++)
+    {
+        monos[i]->setEstrategia(inteligenciaMono.elegirOpcion());
     }
 }
 
@@ -301,6 +327,49 @@ void Nivel2::actualizarArmadillos(float intervaloTiempo)
     }
 }
 
+void Nivel2::actualizarMonos(float intervaloTiempo)
+{
+    int i = 0;
+
+    while (i < (int)monos.size())
+    {
+        Mono *mono = monos[i];
+        mono->actualizar(intervaloTiempo, mapa, bombas, getFilaDexter(), getColumnaDexter());
+
+        // Si el mono decidio lanzar, creamos la semilla
+        if (mono->quiereLanzar())
+        {
+            bombas.push_back(new Bomba(mono->getFilaObjetivo(), mono->getColumnaObjetivo(),
+                                       mono->getFila(), mono->getColumna(),
+                                       mono->getEstrategia()));
+            mono->confirmarLanzamiento();
+
+            // Para el proximo ataque la inteligencia vuelve a escoger
+            mono->setEstrategia(inteligenciaMono.elegirOpcion());
+        }
+
+        int fila = (mono->getY() + mono->getAlto() / 2) / Mapa::TAM_CASILLA;
+        int columna = (mono->getX() + mono->getAncho() / 2) / Mapa::TAM_CASILLA;
+
+        // Muere si lo alcanza el fuego
+        // (tocarlo no hace dano: el mono solo ataca con sus semillas)
+        if (hayFuegoEnCasilla(fila, columna))
+        {
+            mono->morir();
+        }
+
+        if (!mono->estaVivo())
+        {
+            delete mono;
+            monos.erase(monos.begin() + i);
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
 void Nivel2::eliminarTodosLosEnemigos()
 {
     for (int i = 0; i < (int)nieblas.size(); i++)
@@ -314,6 +383,12 @@ void Nivel2::eliminarTodosLosEnemigos()
         delete armadillos[i];
     }
     armadillos.clear();
+
+    for (int i = 0; i < (int)monos.size(); i++)
+    {
+        delete monos[i];
+    }
+    monos.clear();
 }
 
 bool Nivel2::tocaADexter(float x, float y, int ancho, int alto)
@@ -327,7 +402,7 @@ bool Nivel2::tocaADexter(float x, float y, int ancho, int alto)
 
 void Nivel2::revisarPuerta()
 {
-    if (nieblas.empty() && armadillos.empty() && !mapa.estaPuertaAbierta())
+    if (nieblas.empty() && armadillos.empty() && monos.empty() && !mapa.estaPuertaAbierta())
     {
         mapa.abrirPuerta();
     }
@@ -341,6 +416,11 @@ const std::vector<Niebla*> &Nivel2::getNieblas() const
 const std::vector<Armadillo*> &Nivel2::getArmadillos() const
 {
     return armadillos;
+}
+
+const std::vector<Mono*> &Nivel2::getMonos() const
+{
+    return monos;
 }
 
 //--------------------------------------------------- Consultas ----------------------------------//

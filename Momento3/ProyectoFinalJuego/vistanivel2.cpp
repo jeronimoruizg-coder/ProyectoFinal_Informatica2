@@ -186,6 +186,45 @@ void VistaNivel2::actualizarBombasGraficas()
         }
 
         figurasBombas[i]->show();
+
+        // La semilla del mono se dibuja distinto: mas pequena y volando
+        if (bombas[i]->esSemillaDelMono())
+        {
+            figurasBombas[i]->setRect(0, 0, 24, 24);
+
+            // Va desde la casilla del mono hasta la casilla destino
+            float progreso = bombas[i]->getProgresoVuelo();
+            float origenX = bombas[i]->getColumnaOrigen() * tam;
+            float origenY = bombas[i]->getFilaOrigen() * tam;
+            float destinoX = bombas[i]->getColumna() * tam;
+            float destinoY = bombas[i]->getFila() * tam;
+
+            float semillaX = origenX + (destinoX - origenX) * progreso;
+            float semillaY = origenY + (destinoY - origenY) * progreso;
+
+            // Arco: sube en la mitad del vuelo y baja al caer
+            semillaY = semillaY - 4 * progreso * (1 - progreso) * 30;
+
+            // +12 para que quede centrada en la casilla
+            figurasBombas[i]->setPos(MARGEN_X + semillaX + 12,
+                                     MARGEN_Y + semillaY + 12);
+
+            // En el ultimo segundo parpadea en rojo, si no es verde
+            bool parpadeoSemilla = bombas[i]->getTiempoMecha() < 1 &&
+                                   int(bombas[i]->getTiempoMecha() * 8) % 2 == 0;
+            if (parpadeoSemilla)
+            {
+                figurasBombas[i]->setBrush(QBrush(QColor(200, 30, 30)));
+            }
+            else
+            {
+                figurasBombas[i]->setBrush(QBrush(QColor(120, 200, 60)));
+            }
+            continue;
+        }
+
+        // Bomba normal de Dexter
+        figurasBombas[i]->setRect(0, 0, tam - 12, tam - 12);
         figurasBombas[i]->setPos(MARGEN_X + bombas[i]->getX() + 6,
                                  MARGEN_Y + bombas[i]->getY() + 6);
 
@@ -322,6 +361,34 @@ void VistaNivel2::actualizarArmadillosGraficos()
     }
 }
 
+
+void VistaNivel2::actualizarMonosGraficos()
+{
+    const std::vector<Mono*> &monos = nivel.getMonos();
+
+    // Una figura por mono
+    while (figurasMonos.size() < monos.size())
+    {
+        QGraphicsRectItem *figura = escena->addRect(
+            0, 0, monos[0]->getAncho(), monos[0]->getAlto(),
+            QPen(Qt::black, 2), QBrush(QColor(30, 110, 50)));
+        figura->setZValue(9);
+        figurasMonos.push_back(figura);
+    }
+
+    while (figurasMonos.size() > monos.size())
+    {
+        delete figurasMonos.back();
+        figurasMonos.pop_back();
+    }
+
+    for (int i = 0; i < (int)monos.size(); i++)
+    {
+        figurasMonos[i]->setPos(MARGEN_X + monos[i]->getX(),
+                                MARGEN_Y + monos[i]->getY());
+    }
+}
+
 //-------------------------------------------------- Juego y teclado -------------------------//
 
 void VistaNivel2::actualizarJuego()
@@ -351,6 +418,7 @@ void VistaNivel2::actualizarJuego()
     actualizarFuegoGrafico();
     actualizarNieblasGraficas();
     actualizarArmadillosGraficos();
+    actualizarMonosGraficos();
     actualizarContadorVidas();
 
     if (nivel.haPerdido() || nivel.haGanado())
