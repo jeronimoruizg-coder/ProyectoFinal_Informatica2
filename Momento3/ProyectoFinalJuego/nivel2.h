@@ -25,6 +25,10 @@ private:
     //revisa si alguna bomba tiene fuego en esa casilla
     bool hayFuegoEnCasilla(int fila, int columna) const;
 
+    // Mueve a Dexter sin dejarlo atravesar bombas
+    void moverDexter(int dirX, int dirY, float intervaloTiempo);
+    bool dexterChocaConBomba();
+
     //casilla donde esta el centro de Dexter
     int getFilaDexter();
     int getColumnaDexter();

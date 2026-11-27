@@ -3,6 +3,8 @@
 
 #include "enemigos.h"
 #include "mapa.h"
+#include "bomba.h"
+#include <vector>
 
 // Enemigo del nivel 2 que embiste en linea recta y rompe paredes.
 // Se mueve casilla por casilla por los pasillos.
@@ -33,14 +35,20 @@ private:
     bool vivo;
 
     bool avanzarHaciaDestino(float intervaloTiempo, float rapidez);
-    void elegirDireccionPatrulla(Mapa &mapa);
+    void elegirDireccionPatrulla(Mapa &mapa, const std::vector<Bomba*> &bombas);
     bool puedeVerADexter(Mapa &mapa, int filaDexter, int columnaDexter);
-    void siguienteCasillaEmbestida(Mapa &mapa);
+    void siguienteCasillaEmbestida(Mapa &mapa, const std::vector<Bomba*> &bombas);
+
+    // Una casilla esta bloqueada si es pared o tiene una bomba sin explotar
+    bool hayBombaEn(const std::vector<Bomba*> &bombas, int filaConsulta, int columnaConsulta);
+    bool estaBloqueada(Mapa &mapa, const std::vector<Bomba*> &bombas,
+                       int filaConsulta, int columnaConsulta);
 
 public:
     Armadillo(int filaInicial, int columnaInicial);
 
-    void actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, int columnaDexter);
+    void actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba*> &bombas,
+                    int filaDexter, int columnaDexter);
 
     // Termina la embestida (por ejemplo, al golpear a Dexter)
     void terminarEmbestida();

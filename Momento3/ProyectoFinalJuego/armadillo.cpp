@@ -30,7 +30,8 @@ Armadillo::Armadillo(int filaInicial, int columnaInicial)
     tiempoEstado = 0;
 }
 
-void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, int columnaDexter)
+void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba*> &bombas,
+                           int filaDexter, int columnaDexter)
 {
     if (estado == PATRULLANDO)
     {
@@ -45,7 +46,7 @@ void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, in
             }
             else
             {
-                elegirDireccionPatrulla(mapa);
+                elegirDireccionPatrulla(mapa, bombas);
             }
         }
     }
@@ -58,7 +59,7 @@ void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, in
             // Arranca la embestida desde una velocidad baja
             estado = EMBISTIENDO;
             velocidadEmbestida = 60;
-            siguienteCasillaEmbestida(mapa);
+            siguienteCasillaEmbestida(mapa, bombas);
         }
     }
     else if (estado == EMBISTIENDO)
@@ -73,7 +74,7 @@ void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, in
         // Al llegar a cada casilla revisa que hay adelante
         if (avanzarHaciaDestino(intervaloTiempo, velocidadEmbestida))
         {
-            siguienteCasillaEmbestida(mapa);
+            siguienteCasillaEmbestida(mapa, bombas);
         }
     }
     else if (estado == ATURDIDO)
@@ -83,7 +84,7 @@ void Armadillo::actualizar(float intervaloTiempo, Mapa &mapa, int filaDexter, in
         if (tiempoEstado <= 0)
         {
             estado = PATRULLANDO;
-            elegirDireccionPatrulla(mapa);
+            elegirDireccionPatrulla(mapa, bombas);
         }
     }
 }
@@ -130,10 +131,10 @@ bool Armadillo::avanzarHaciaDestino(float intervaloTiempo, float rapidez)
     return false;
 }
 
-void Armadillo::elegirDireccionPatrulla(Mapa &mapa)
+void Armadillo::elegirDireccionPatrulla(Mapa &mapa, const std::vector<Bomba*> &bombas)
 {
     // Si puede seguir derecho, sigue
-    if (!mapa.esPared(fila + dirFila, columna + dirColumna))
+    if (!estaBloqueada(mapa, bombas, fila + dirFila, columna + dirColumna))
     {
         filaDestino = fila + dirFila;
         columnaDestino = columna + dirColumna;
@@ -148,7 +149,7 @@ void Armadillo::elegirDireccionPatrulla(Mapa &mapa)
 
     for (int d = 0; d < 4; d++)
     {
-        if (!mapa.esPared(fila + cambioFila[d], columna + cambioColumna[d]))
+        if (!estaBloqueada(mapa, bombas, fila + cambioFila[d], columna + cambioColumna[d]))
         {
             libres[cantidadLibres] = d;
             cantidadLibres++;
@@ -209,7 +210,7 @@ bool Armadillo::puedeVerADexter(Mapa &mapa, int filaDexter, int columnaDexter)
 }
 
 // Decide a donde sigue la embestida segun lo que haya adelante
-void Armadillo::siguienteCasillaEmbestida(Mapa &mapa)
+void Armadillo::siguienteCasillaEmbestida(Mapa &mapa, const std::vector<Bomba*> &bombas)
 {
     int siguienteFila = fila + dirFila;
     int siguienteColumna = columna + dirColumna;
@@ -223,8 +224,9 @@ void Armadillo::siguienteCasillaEmbestida(Mapa &mapa)
         return;
     }
 
-    // Pared fija o puerta: se estrella
-    if (tipo == Mapa::PARED_FIJA || tipo == Mapa::PUERTA)
+    // Pared fija, puerta o bomba: se estrella
+    if (tipo == Mapa::PARED_FIJA || tipo == Mapa::PUERTA ||
+        hayBombaEn(bombas, siguienteFila, siguienteColumna))
     {
         terminarEmbestida();
         return;
@@ -245,6 +247,26 @@ void Armadillo::terminarEmbestida()
     // Se queda en la casilla donde va (o donde esta)
     filaDestino = fila;
     columnaDestino = columna;
+}
+
+bool Armadillo::hayBombaEn(const std::vector<Bomba*> &bombas, int filaConsulta, int columnaConsulta)
+{
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        if (!bombas[i]->haExplotado() &&
+            bombas[i]->getFila() == filaConsulta && bombas[i]->getColumna() == columnaConsulta)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Armadillo::estaBloqueada(Mapa &mapa, const std::vector<Bomba*> &bombas,
+                              int filaConsulta, int columnaConsulta)
+{
+    return mapa.esPared(filaConsulta, columnaConsulta) ||
+           hayBombaEn(bombas, filaConsulta, columnaConsulta);
 }
 
 void Armadillo::morir()

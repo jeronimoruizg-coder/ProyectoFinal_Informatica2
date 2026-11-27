@@ -33,7 +33,7 @@ void Nivel2::actualizar(int dirX, int dirY, float intervaloTiempo)
         return;
     }
 
-    dexter.mover(dirX, dirY, intervaloTiempo, mapa);
+    moverDexter(dirX, dirY, intervaloTiempo);
     dexter.actualizarInvulnerabilidad(intervaloTiempo);
 
     actualizarBombas(intervaloTiempo);
@@ -110,6 +110,50 @@ void Nivel2::actualizarBombas(float intervaloTiempo)
             i++;
         }
     }
+}
+
+// Igual que con las paredes, se mueve un eje a la vez:
+// si al moverse queda encima de una bomba solida, se devuelve
+void Nivel2::moverDexter(int dirX, int dirY, float intervaloTiempo)
+{
+    float anteriorX = dexter.getX();
+    dexter.mover(dirX, 0, intervaloTiempo, mapa);
+    if (dexterChocaConBomba())
+    {
+        dexter.setPosicion(anteriorX, dexter.getY());
+    }
+
+    float anteriorY = dexter.getY();
+    dexter.mover(0, dirY, intervaloTiempo, mapa);
+    if (dexterChocaConBomba())
+    {
+        dexter.setPosicion(dexter.getX(), anteriorY);
+    }
+
+    // Cuando Dexter termina de salir de su bomba, esta se vuelve solida
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        if (bombas[i]->estaDexterEncima() &&
+            !tocaADexter(bombas[i]->getX(), bombas[i]->getY(),
+                         bombas[i]->getAncho(), bombas[i]->getAlto()))
+        {
+            bombas[i]->dexterSeBajo();
+        }
+    }
+}
+
+bool Nivel2::dexterChocaConBomba()
+{
+    for (int i = 0; i < (int)bombas.size(); i++)
+    {
+        if (bombas[i]->esSolidaParaDexter() &&
+            tocaADexter(bombas[i]->getX(), bombas[i]->getY(),
+                        bombas[i]->getAncho(), bombas[i]->getAlto()))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Nivel2::eliminarBomba(int indice)
@@ -221,7 +265,7 @@ void Nivel2::actualizarArmadillos(float intervaloTiempo)
     while (i < (int)armadillos.size())
     {
         Armadillo *armadillo = armadillos[i];
-        armadillo->actualizar(intervaloTiempo, mapa, getFilaDexter(), getColumnaDexter());
+        armadillo->actualizar(intervaloTiempo, mapa, bombas, getFilaDexter(), getColumnaDexter());
 
         int fila = (armadillo->getY() + armadillo->getAlto() / 2) / Mapa::TAM_CASILLA;
         int columna = (armadillo->getX() + armadillo->getAncho() / 2) / Mapa::TAM_CASILLA;
