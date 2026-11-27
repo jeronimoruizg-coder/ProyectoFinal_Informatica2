@@ -237,10 +237,10 @@ void Nivel2::crearEnemigos()
     nieblas.push_back(new Niebla(2, 9, false, 8));
 
     // Armadillo(fila, columna)
-    armadillos.push_back(new Armadillo(11, 13));
+    armadillos.push_back(new Armadillo(1, 11));
 
     // Mono(fila, columna)
-    monos.push_back(new Mono(9, 11));
+    monos.push_back(new Mono(11, 2));
 
     // En dificil aparece una niebla y un armadillo mas
     if (dificil)

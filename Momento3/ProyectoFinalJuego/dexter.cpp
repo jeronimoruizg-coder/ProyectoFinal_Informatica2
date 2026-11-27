@@ -379,6 +379,7 @@ void Dexter::iniciarNivel2() //Modificamos los atributos de dexter para el laber
     // Sin power-ups al empezar y mirando hacia abajo
     tiempoPistola = 0;
     recargaDisparo = 0;
+    disparosRestantes = 0;
     mirandoX = 0;
     mirandoY = 1;
 
@@ -405,11 +406,12 @@ void Dexter::activarSueroNivel2()
     tiempoSuero = 15;
 }
 
-// La pistola de veneno dura 25 s
+// La pistola de veneno dura 25 s o 5 disparos, lo que pase primero
 void Dexter::activarPistola()
 {
     tiempoPistola = 25;
     recargaDisparo = 0;
+    disparosRestantes = 5;
 }
 
 // Descuenta el tiempo de los power-ups y de la recarga
@@ -447,6 +449,18 @@ bool Dexter::puedeDisparar() const
 void Dexter::registrarDisparo()
 {
     recargaDisparo = 1;
+    disparosRestantes--;
+
+    // Si ya no le quedan disparos, se queda sin pistola
+    if (disparosRestantes <= 0)
+    {
+        tiempoPistola = 0;
+    }
+}
+
+int Dexter::getDisparosRestantes() const
+{
+    return disparosRestantes;
 }
 
 float Dexter::getTiempoSuero() const { return tiempoSuero; }

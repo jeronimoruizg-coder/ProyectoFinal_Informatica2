@@ -91,6 +91,7 @@ public:
     void actualizarPoderes(float intervaloTiempo);
     bool tienePistola() const;
     bool puedeDisparar() const;
+    int getDisparosRestantes() const;
     void registrarDisparo();
     float getTiempoSuero() const;
     float getTiempoPistola() const;
@@ -108,6 +109,7 @@ private:
     // Atributos del nivel 2
     float tiempoPistola;
     float recargaDisparo;
+    int disparosRestantes;
     int mirandoX;
     int mirandoY;
 

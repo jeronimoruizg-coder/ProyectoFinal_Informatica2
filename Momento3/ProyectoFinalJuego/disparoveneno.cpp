@@ -30,12 +30,14 @@ void DisparoVeneno::actualizar(float intervaloTiempo, Mapa &mapa)
     x += dirX * velocidad * intervaloTiempo;
     y += dirY * velocidad * intervaloTiempo;
 
-    // Si su centro entra en una pared, se acaba
+    // Si su centro entra en una pared, se acaba.
+    // Si la pared es rompible, el veneno la destruye
     int fila = (y + alto / 2) / Mapa::TAM_CASILLA;
     int columna = (x + ancho / 2) / Mapa::TAM_CASILLA;
 
     if (mapa.esPared(fila, columna))
     {
+        mapa.romperPared(fila, columna);
         activo = false;
     }
 }
