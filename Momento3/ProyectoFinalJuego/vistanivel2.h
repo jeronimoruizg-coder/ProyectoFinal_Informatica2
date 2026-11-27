@@ -8,6 +8,8 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QColor>
+#include <QGraphicsEllipseItem>
+#include <vector>
 #include "nivel2.h"
 
 class VistaNivel2 : public QGraphicsView
@@ -24,6 +26,7 @@ private:
     //--------------------------------------------------- Mapa -------------------------------------//
     QGraphicsRectItem *figurasCasillas[Mapa::FILAS][Mapa::COLUMNAS];
     void crearMapa();
+    void actualizarMapaGrafico();
     QColor colorCasilla(int tipo);
 
     //--------------------------------------------------- Dexter -----------------------------------//
@@ -33,6 +36,14 @@ private:
     // Contador de vidas
     QGraphicsTextItem *textoVidas;
     void actualizarContadorVidas();
+
+    //--------------------------------------------------- Bombas -----------------------------------//
+    // Una figura por cada bomba del nivel
+    std::vector<QGraphicsEllipseItem*> figurasBombas;
+    // Una figura por cada casilla con fuego
+    std::vector<QGraphicsRectItem*> figurasFuego;
+    void actualizarBombasGraficas();
+    void actualizarFuegoGrafico();
 
     //-------------------------------------------------- Interaccion Teclado -------------------------//
     bool arribaPresionada;
@@ -44,9 +55,11 @@ private:
 
     //--------------------------------------------------- Pausa ----------------------------------//
     bool partidaPausada;
+    bool partidaTerminada;
     QGraphicsRectItem *fondoPausa;
     QGraphicsTextItem *textoPausa;
     void alternarPausa();
+    void finalizarPartida();
 
 public:
     VistaNivel2(bool dificultad = false);
