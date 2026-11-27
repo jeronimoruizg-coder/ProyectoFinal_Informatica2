@@ -16,6 +16,7 @@ Bomba::Bomba(int filaInicial, int columnaInicial)
 
     explotada = false;
     tiempoExplosion = 0;
+    dexterEncima = true;
 }
 
 // Funcion heredada de Objetos
@@ -169,4 +170,19 @@ int Bomba::getColumna() const
 float Bomba::getTiempoMecha() const
 {
     return tiempoMecha;
+}
+
+bool Bomba::esSolidaParaDexter() const
+{
+    return !explotada && !dexterEncima;
+}
+
+bool Bomba::estaDexterEncima() const
+{
+    return dexterEncima;
+}
+
+void Bomba::dexterSeBajo()
+{
+    dexterEncima = false;
 }

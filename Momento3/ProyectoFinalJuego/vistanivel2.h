@@ -45,6 +45,18 @@ private:
     void actualizarBombasGraficas();
     void actualizarFuegoGrafico();
 
+    //--------------------------------------------------- Enemigos ---------------------------------//
+    // Una figura por cada niebla viva
+    std::vector<QGraphicsEllipseItem*> figurasNieblas;
+    void actualizarNieblasGraficas();
+
+    // Una figura por cada armadillo vivo
+    std::vector<QGraphicsRectItem*> figurasArmadillos;
+    void actualizarArmadillosGraficos();
+
+    // Cuenta los cuadros del juego (para hacer parpadear cosas)
+    int contadorCuadros;
+
     //-------------------------------------------------- Interaccion Teclado -------------------------//
     bool arribaPresionada;
     bool abajoPresionada;

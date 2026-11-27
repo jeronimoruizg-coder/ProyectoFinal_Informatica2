@@ -12,6 +12,7 @@ VistaNivel2::VistaNivel2(bool dificultad): nivel(dificultad)
     derechaPresionada = false;
     partidaPausada = false;
     partidaTerminada = false;
+    contadorCuadros = 0;
 
     escena = new QGraphicsScene(this);
     escena->setSceneRect(0, 0, 1280, 720);
@@ -243,6 +244,84 @@ void VistaNivel2::actualizarFuegoGrafico()
     }
 }
 
+//--------------------------------------------------- Enemigos ---------------------------------//
+
+void VistaNivel2::actualizarNieblasGraficas()
+{
+    const std::vector<Niebla*> &nieblas = nivel.getNieblas();
+
+    // Mismo truco que con las bombas: una figura por niebla
+    while (figurasNieblas.size() < nieblas.size())
+    {
+        QGraphicsEllipseItem *figura = escena->addEllipse(
+            0, 0, nieblas[0]->getAncho(), nieblas[0]->getAlto(),
+            QPen(Qt::NoPen), QBrush(QColor(230, 230, 255, 170)));
+        figura->setZValue(8);
+        figurasNieblas.push_back(figura);
+    }
+
+    while (figurasNieblas.size() > nieblas.size())
+    {
+        delete figurasNieblas.back();
+        figurasNieblas.pop_back();
+    }
+
+    for (int i = 0; i < (int)nieblas.size(); i++)
+    {
+        figurasNieblas[i]->setPos(MARGEN_X + nieblas[i]->getX(),
+                                  MARGEN_Y + nieblas[i]->getY());
+    }
+}
+
+void VistaNivel2::actualizarArmadillosGraficos()
+{
+    const std::vector<Armadillo*> &armadillos = nivel.getArmadillos();
+
+    // Una figura por armadillo
+    while (figurasArmadillos.size() < armadillos.size())
+    {
+        QGraphicsRectItem *figura = escena->addRect(
+            0, 0, armadillos[0]->getAncho(), armadillos[0]->getAlto(),
+            QPen(Qt::black, 2), QBrush(QColor(110, 75, 40)));
+        figura->setZValue(9);
+        figurasArmadillos.push_back(figura);
+    }
+
+    while (figurasArmadillos.size() > armadillos.size())
+    {
+        delete figurasArmadillos.back();
+        figurasArmadillos.pop_back();
+    }
+
+    for (int i = 0; i < (int)armadillos.size(); i++)
+    {
+        figurasArmadillos[i]->setPos(MARGEN_X + armadillos[i]->getX(),
+                                     MARGEN_Y + armadillos[i]->getY());
+
+        // El color avisa en que estado esta
+        QColor color(110, 75, 40);   // caminando
+
+        if (armadillos[i]->estaPreparando())
+        {
+            // Parpadea en amarillo antes de embestir
+            if ((contadorCuadros / 5) % 2 == 0)
+            {
+                color = QColor(240, 200, 40);
+            }
+        }
+        else if (armadillos[i]->estaEmbistiendo())
+        {
+            color = QColor(200, 60, 30);
+        }
+        else if (armadillos[i]->estaAturdido())
+        {
+            color = QColor(150, 150, 150);
+        }
+
+        figurasArmadillos[i]->setBrush(QBrush(color));
+    }
+}
+
 //-------------------------------------------------- Juego y teclado -------------------------//
 
 void VistaNivel2::actualizarJuego()
@@ -251,6 +330,8 @@ void VistaNivel2::actualizarJuego()
     {
         return;
     }
+
+        contadorCuadros++;
 
     // Convertimos las teclas presionadas en una direccion
     int dirX = 0;
@@ -268,9 +349,11 @@ void VistaNivel2::actualizarJuego()
     actualizarDexter();
     actualizarBombasGraficas();
     actualizarFuegoGrafico();
+    actualizarNieblasGraficas();
+    actualizarArmadillosGraficos();
     actualizarContadorVidas();
 
-    if (nivel.haPerdido())
+    if (nivel.haPerdido() || nivel.haGanado())
     {
         finalizarPartida();
     }
@@ -358,7 +441,14 @@ void VistaNivel2::finalizarPartida()
                     QPen(QColor(140, 170, 112), 3),
                     QBrush(QColor(38, 59, 52)))->setZValue(30);
 
-    QGraphicsTextItem *mensaje = escena->addText("¡HAS PERDIDO!");
+    // El mensaje depende de como termino la partida
+    QString resultado = "¡HAS PERDIDO!";
+    if (nivel.haGanado())
+    {
+        resultado = "¡VICTORIA!";
+    }
+
+    QGraphicsTextItem *mensaje = escena->addText(resultado);
     mensaje->setFont(QFont("Consolas", 28, QFont::Bold));
     mensaje->setDefaultTextColor(QColor(255, 245, 217));
     mensaje->setPos((1280 - mensaje->boundingRect().width()) / 2,
