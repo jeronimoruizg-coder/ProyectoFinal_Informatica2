@@ -107,6 +107,13 @@ private:
     // Prediccion de lanzamientos
     bool debeLanzarExcremento(Guacamaya *guacamaya);
 
+
+    // Registro de eventos para los efectos de sonido
+    bool eventoRecoleccion;
+    bool eventoExplosion;
+    bool eventoDano;
+    bool eventoBeneficio;
+
 public:
     Nivel1(bool dificultad = false);
     ~Nivel1();
@@ -146,6 +153,12 @@ public:
     int getTiempoRestante() const;
     bool haGanado() const;
     bool haPerdido() const;
+
+    // Consultamos y consumimos los eventos
+    bool huboRecoleccion();
+    bool huboExplosion();
+    bool huboDano();
+    bool huboBeneficio();
 };
 
 #endif // NIVEL1_H

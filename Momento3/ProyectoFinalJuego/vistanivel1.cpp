@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QStringList>
 #include <QDebug>
+#include <QUrl>
 
 VistaNivel1::VistaNivel1(bool dificultad): nivel(dificultad)
 {
@@ -176,6 +177,14 @@ VistaNivel1::VistaNivel1(bool dificultad): nivel(dificultad)
     connect(salir, &QPushButton::clicked,
             this, &VistaNivel1::solicitarMenuPrincipal);
 
+
+    // Preparamos los recursos de audio
+    cargarAudios();
+
+    // Iniciamos la musica del nivel
+    musicaFondo->play();
+    alertaJabaliAnterior = false;
+
     // Creamos el temporizador
     temporizador = new QTimer(this);
     // Conectamos la señal con nuestra funcion
@@ -317,6 +326,7 @@ void VistaNivel1::actualizarJuego()
     }
 
     nivel.actualizar(direccion, 0.016);
+    actualizarSonidos();
 
     figuraDexter->setPos(nivel.getDexter().getX(), nivel.getDexter().getY());
     actualizarAnimacion(direccion);
@@ -901,6 +911,15 @@ void VistaNivel1::finalizarPartida()
 
     // Detenemos el temporizador principal
     temporizador->stop();
+    // Detenemos la musica y la alerta
+    musicaFondo->stop();
+    sonidoAlertaJabali->stop();
+
+    // Reproducimos la musica si ganamos
+    if (nivel.haGanado())
+    {
+        sonidoVictoria->play();
+    }
 
     // Desactivamos el parpadeo rojo
     efectoDano->setEnabled(false);
@@ -1003,6 +1022,30 @@ void VistaNivel1::finalizarPartida()
     // Reutilizamos la señal de navegacion
     connect(regresar, &QPushButton::clicked,
             this, &VistaNivel1::solicitarMenuPrincipal);
+//--------------------------------------------------- Opcion de pasar al siguiente nivel -----------------------------//
+    // Si ganamos, permitimos avanzar al siguiente nivel
+    if (nivel.haGanado())
+    {
+        // Creamos el boton para avanzar
+        QPushButton *siguiente =
+            new QPushButton("SIGUIENTE NIVEL");
+
+        siguiente->setFixedSize(360, 50);
+
+        siguiente->setFont(
+            QFont("Consolas", 14, QFont::Bold));
+
+        // Incorporamos el boton a la escena
+        QGraphicsProxyWidget *botonSiguiente =
+            escena->addWidget(siguiente);
+
+        botonSiguiente->setPos(460, 325);
+        botonSiguiente->setZValue(31);
+
+        // Solicitamos el inicio del nivel 2
+        connect(siguiente, &QPushButton::clicked,
+                this, &VistaNivel1::solicitarSiguienteNivel);
+    }
 }
 
 void VistaNivel1::cargarSpritesBeneficios()
@@ -1307,6 +1350,19 @@ void VistaNivel1::actualizarJabalisGraficos()
 
 void VistaNivel1::actualizarAdvertenciaJabali()
 {
+    // Consultamos si existe una advertencia
+    bool alertaActual = nivel.hayAdvertenciaJabali();
+
+    // Reproducimos el sonido solamente al iniciar la alerta
+    if (alertaActual && !alertaJabaliAnterior)
+    {
+        sonidoAlertaJabali->play();
+    }
+
+    // Guardamos el estado actual de la advertencia
+    alertaJabaliAnterior = alertaActual;
+
+
     // Si no existe una advertencia, ocultamos la figura
     if (!nivel.hayAdvertenciaJabali())
     {
@@ -1550,6 +1606,9 @@ void VistaNivel1::alternarPausa()
     {
         temporizador->stop();
 
+        musicaFondo->pause();
+        sonidoAlertaJabali->stop();
+
         fondoPausa->show();
         textoPausa->show();
 
@@ -1568,5 +1627,93 @@ void VistaNivel1::alternarPausa()
         setFocus();
 
         temporizador->start();
+        musicaFondo->play();
+    }
+}
+
+//------------------------------------------------ Sonido ---------------------------------//
+QSoundEffect *VistaNivel1::cargarEfecto(
+    const QString &ruta, float volumen)
+{
+    // Creamos el efecto de sonido
+    QSoundEffect *efecto = new QSoundEffect(this);
+
+    // Asociamos el archivo de audio
+    efecto->setSource(QUrl(ruta));
+
+    // Configuramos el volumen
+    efecto->setVolume(volumen);
+
+    // El efecto se reproduce una sola vez
+    efecto->setLoopCount(1);
+
+    return efecto;
+}
+
+void VistaNivel1::cargarAudios()
+{
+    // Creamos el reproductor de musica
+    musicaFondo = new QMediaPlayer(this);
+
+    // Creamos la salida de audio
+    salidaAudio = new QAudioOutput(this);
+
+    // Asociamos la salida al reproductor
+    musicaFondo->setAudioOutput(salidaAudio);
+
+    // Configuramos el volumen de la musica
+    salidaAudio->setVolume(0.25);
+
+    // Cargamos la musica del nivel
+    musicaFondo->setSource(
+        QUrl("qrc:/audios/musica_nivel1.wav"));
+
+    // Repetimos la musica indefinidamente
+    musicaFondo->setLoops(QMediaPlayer::Infinite);
+
+    // Cargamos los efectos de sonido
+    sonidoRecoleccion = cargarEfecto(
+        "qrc:/audios/recoleccion.wav", 0.6);
+
+    sonidoExplosion = cargarEfecto(
+        "qrc:/audios/explosion.wav", 0.7);
+
+    sonidoDano = cargarEfecto(
+        "qrc:/audios/dano.wav", 0.7);
+
+    sonidoBeneficio = cargarEfecto(
+        "qrc:/audios/beneficio.wav", 0.6);
+
+    sonidoVictoria = cargarEfecto(
+        "qrc:/audios/victoria.wav", 0.8);
+
+    sonidoAlertaJabali = cargarEfecto(
+        "qrc:/audios/alerta_jabali.wav", 0.7);
+}
+
+void VistaNivel1::actualizarSonidos()
+{
+    // Sonido de recoleccion
+    if (nivel.huboRecoleccion())
+    {
+        sonidoRecoleccion->play();
+    }
+
+    // Sonido de explosion
+    if (nivel.huboExplosion())
+    {
+        sonidoExplosion->play();
+    }
+
+    // Sonido de dano
+    if (nivel.huboDano())
+    {
+        sonidoDano->play();
+    }
+
+    // Sonido de beneficio
+    if (nivel.huboBeneficio())
+    {
+        sonidoBeneficio->play();
     }
 }

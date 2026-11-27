@@ -35,6 +35,12 @@ Nivel1::Nivel1(bool dificultad): inteligenciaGuacamaya(3)
     tiempoAdvertenciaJabali = 0;
     direccionJabali = 1;
     tiempoGeneracionGuacamaya = 0;
+
+    //Coordinamos los eventos para
+    eventoRecoleccion = false;
+    eventoExplosion = false;
+    eventoDano = false;
+    eventoBeneficio = false;
 }
 
 
@@ -107,6 +113,8 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
         return;
     }
 
+    // Guardamos las vidas antes de actualizar los enemigos
+    int vidasAnteriores = dexter.getVidas();
     // Descontamos el tiempo transcurrido
     tiempoRestante -= intervaloTiempo;
 
@@ -154,6 +162,13 @@ void Nivel1::actualizar(int direccion, float intervaloTiempo)
     actualizarJabalis(intervaloTiempo);
     actualizarGuacamayas(intervaloTiempo);
     actualizarExcrementos(intervaloTiempo);
+
+
+    // Comprobamos si Dexter realmente perdio una vida
+    if (dexter.getVidas() < vidasAnteriores)
+    {
+        eventoDano = true;
+    }
 }
 
 // Solicitamos a Dexter saltar
@@ -210,6 +225,8 @@ void Nivel1::actualizarMuestras(float intervaloTiempo)
         else if (detectarRecoleccion(muestras[i]))
         {
             muestrasRecolectadas += muestras[i]->sumarPuntos();
+
+            eventoRecoleccion = true;// Sonido de recoleccion
 
             eliminarMuestra(i);
         }
@@ -329,6 +346,8 @@ void Nivel1::actualizarSemillas(float intervaloTiempo)
         {
             semillas[i]->explotar();
 
+            eventoExplosion = true;//Sonido explosion
+
             // Aplicamos daño a Dexter
             dexter.recibirDano();
 
@@ -404,6 +423,7 @@ void Nivel1::actualizarBeneficios(float intervaloTiempo)
         // Si Dexter lo atrapa, aplicamos el beneficio
         else if (detectarRecoleccion(beneficios[i]))
         {
+
             if (beneficios[i]->getTipo() == 0)
             {
                 dexter.recuperarVida();
@@ -413,6 +433,7 @@ void Nivel1::actualizarBeneficios(float intervaloTiempo)
                 dexter.activarSuero();
             }
 
+            eventoBeneficio = true;//Sonido de Beneficio
             eliminarBeneficio(i);
         }
 
@@ -856,4 +877,37 @@ bool Nivel1::haPerdido() const
 {
     return dexter.getVidas() <= 0
            || tiempoRestante <= 0;
+}
+
+//------------------------------------- Sonido ------------------------------------//
+bool Nivel1::huboRecoleccion()
+{
+    bool resultado = eventoRecoleccion;
+    eventoRecoleccion = false;
+
+    return resultado;
+}
+
+bool Nivel1::huboExplosion()
+{
+    bool resultado = eventoExplosion;
+    eventoExplosion = false;
+
+    return resultado;
+}
+
+bool Nivel1::huboDano()
+{
+    bool resultado = eventoDano;
+    eventoDano = false;
+
+    return resultado;
+}
+
+bool Nivel1::huboBeneficio()
+{
+    bool resultado = eventoBeneficio;
+    eventoBeneficio = false;
+
+    return resultado;
 }

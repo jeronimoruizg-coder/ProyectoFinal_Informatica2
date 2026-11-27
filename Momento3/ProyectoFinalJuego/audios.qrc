@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="/audios">
+    <file alias="musica_nivel1.wav">audios/musica_nivel1.wav</file>
+    <file alias="recoleccion.wav">audios/recoleccion.wav</file>
+    <file alias="explosion.wav">audios/explosion.wav</file>
+    <file alias="dano.wav">audios/dano.wav</file>
+    <file alias="beneficio.wav">audios/beneficio.wav</file>
+    <file alias="victoria.wav">audios/victoria.wav</file>
+    <file alias="alerta_jabali.wav">audios/alerta_jabali.wav</file>
+  </qresource>
+</RCC>
