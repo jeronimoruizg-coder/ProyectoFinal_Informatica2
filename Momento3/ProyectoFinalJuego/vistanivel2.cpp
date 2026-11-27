@@ -668,7 +668,8 @@ void VistaNivel2::actualizarTextoPoderes()
     }
     if (dexter.tienePistola())
     {
-        nuevoTexto += "Pistola (J): " + QString::number((int)dexter.getTiempoPistola() + 1) + " s";
+        nuevoTexto += "Pistola (J): " + QString::number((int)dexter.getTiempoPistola() + 1) + " s, " +
+                      QString::number(dexter.getDisparosRestantes()) + " disparos";
     }
 
     if (textoPoderes->toPlainText() != nuevoTexto)

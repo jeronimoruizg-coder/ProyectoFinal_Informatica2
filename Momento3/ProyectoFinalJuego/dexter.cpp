@@ -379,8 +379,13 @@ void Dexter::iniciarNivel2() //Modificamos los atributos de dexter para el laber
     // Sin power-ups al empezar y mirando hacia abajo
     tiempoPistola = 0;
     recargaDisparo = 0;
+    disparosRestantes = 0;
     mirandoX = 0;
     mirandoY = 1;
+
+    // Sin empujon al empezar
+    impulsoX = 0;
+    impulsoY = 0;
 
 }
 
@@ -401,11 +406,12 @@ void Dexter::activarSueroNivel2()
     tiempoSuero = 15;
 }
 
-// La pistola de veneno dura 25 s
+// La pistola de veneno dura 25 s o 5 disparos, lo que pase primero
 void Dexter::activarPistola()
 {
     tiempoPistola = 25;
     recargaDisparo = 0;
+    disparosRestantes = 5;
 }
 
 // Descuenta el tiempo de los power-ups y de la recarga
@@ -443,9 +449,79 @@ bool Dexter::puedeDisparar() const
 void Dexter::registrarDisparo()
 {
     recargaDisparo = 1;
+    disparosRestantes--;
+
+    // Si ya no le quedan disparos, se queda sin pistola
+    if (disparosRestantes <= 0)
+    {
+        tiempoPistola = 0;
+    }
+}
+
+int Dexter::getDisparosRestantes() const
+{
+    return disparosRestantes;
 }
 
 float Dexter::getTiempoSuero() const { return tiempoSuero; }
 float Dexter::getTiempoPistola() const { return tiempoPistola; }
 int Dexter::getMirandoX() const { return mirandoX; }
 int Dexter::getMirandoY() const { return mirandoY; }
+
+//------------------------------------------------ Empujon nivel 2 ------------------------------------//
+
+// El golpe le da a Dexter una velocidad de golpe (impulso)
+void Dexter::aplicarImpulso(float impulsoHorizontal, float impulsoVertical)
+{
+    impulsoX = impulsoHorizontal;
+    impulsoY = impulsoVertical;
+}
+
+// FISICA: impulso con amortiguamiento.
+// El golpe le da a Dexter una velocidad de golpe (impulso) que luego
+// se va frenando sola: v = v - k * v * dt. Sale rapido y frena suave.
+void Dexter::moverPorImpulso(float intervaloTiempo, Mapa &mapa)
+{
+    if (impulsoX == 0 && impulsoY == 0)
+    {
+        return;
+    }
+
+    // Igual que en mover(): cada eje por separado.
+    // Si choca con una pared, el empujon en ese eje se acaba
+    float nuevaX = x + impulsoX * intervaloTiempo;
+    if (!chocaConPared(nuevaX, y, mapa))
+    {
+        x = nuevaX;
+    }
+    else
+    {
+        impulsoX = 0;
+    }
+
+    float nuevaY = y + impulsoY * intervaloTiempo;
+    if (!chocaConPared(x, nuevaY, mapa))
+    {
+        y = nuevaY;
+    }
+    else
+    {
+        impulsoY = 0;
+    }
+
+    // Amortiguamiento: cada instante pierde una parte de su velocidad,
+    // proporcional a la velocidad que lleva (v = v - k * v * dt)
+    const float AMORTIGUAMIENTO = 5;
+    impulsoX -= impulsoX * AMORTIGUAMIENTO * intervaloTiempo;
+    impulsoY -= impulsoY * AMORTIGUAMIENTO * intervaloTiempo;
+
+    // Cuando ya va muy lento, lo dejamos quieto
+    if (impulsoX > -10 && impulsoX < 10) impulsoX = 0;
+    if (impulsoY > -10 && impulsoY < 10) impulsoY = 0;
+}
+
+void Dexter::detenerImpulso()
+{
+    impulsoX = 0;
+    impulsoY = 0;
+}

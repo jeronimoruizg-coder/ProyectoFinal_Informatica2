@@ -32,6 +32,12 @@ Mono::Mono(int filaInicial, int columnaInicial)
 void Mono::actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba*> &bombas,
                       int filaDexter, int columnaDexter)
 {
+    // Si ya murio (por ejemplo, lo embistio el armadillo) no hace nada
+    if (!vivo)
+    {
+        return;
+    }
+
     if (tiempoRecarga > 0)
     {
         tiempoRecarga -= intervaloTiempo;

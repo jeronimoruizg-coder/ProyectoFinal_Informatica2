@@ -58,8 +58,10 @@ private:
     // Abre la puerta cuando ya no quedan enemigos
     void revisarPuerta();
 
-    // Segundos que Dexter queda aturdido despues del golpe del armadillo
-    float tiempoAturdido;
+    // Empujon del armadillo y choques entre enemigos
+    void empujarDexter(float intervaloTiempo);
+    bool seTocan(float x1, float y1, int ancho1, int alto1,
+                 float x2, float y2, int ancho2, int alto2);
 
     // Power-ups escondidos en las paredes rompibles
     std::vector<Beneficios*> beneficios;
