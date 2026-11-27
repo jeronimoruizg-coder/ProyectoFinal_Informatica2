@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<RCC>
+  <qresource prefix="/sprites/menu">
+    <file alias="fondo_menu.png">menu/fondo_menu.png</file>
+    <file alias="selector_nivel.png">menu/selector_nivel.png</file>
+    <file alias="selector_dificultad.png">menu/selector_dificultad.png</file>
+    <file alias="boton_jugar.png">menu/boton_jugar.png</file>
+    <file alias="boton_salir.png">menu/boton_salir.png</file>
+    <file alias="flecha_izquierda.png">menu/flecha_izquierda.png</file>
+    <file alias="flecha_derecha.png">menu/flecha_derecha.png</file>
+  </qresource>
+</RCC>

@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QComboBox>
+#include <QLabel>
+#include <QPushButton>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,9 +21,20 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    // Selectores del menu
-    QComboBox *selectorNivel;
-    QComboBox *selectorDificultad;
+
+    // Opciones seleccionadas en el menu
+    int nivelSeleccionado;
+    bool dificultadSeleccionada;
+
+    // Textos que muestran las opciones actuales
+    QLabel *textoNivel;
+    QLabel *textoDificultad;
+
+    void cambiarNivel();
+    void cambiarDificultad();
+    QPushButton *crearBotonGrafico(
+        QWidget *padre, const QString &ruta,
+        int x, int y);
 
     // Funciones de navegacion
     void mostrarMenuPrincipal();
