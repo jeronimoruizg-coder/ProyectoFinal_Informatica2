@@ -29,18 +29,32 @@ VistaNivel1::VistaNivel1(bool dificultad): nivel(dificultad)
     escena = new QGraphicsScene(this);
     escena->setSceneRect(0, 0, 1280, 720); // Le da las dimensiones a la escena, en este caso 1280x720
     setScene(escena); // Esta funcion sirve para que la vista muestre la escena actual
-    escena->setBackgroundBrush(QBrush(QColor(180, 217, 235))); // le damos color al fondo de la escena base
 
-    // Creamos el suelo de la escena:
-    escena->addRect(0, 650, 1280, 70, //Le damos las dimensiones al suelo
-                    QPen(Qt::NoPen), // Lo creamos sin bordes
-                    QBrush(QColor(135, 96, 68))); // Rellenamos el rectanguno(suelo) con el color
 
     //Agregamos el objeto de dexter
     // Cargamos todos los sprites una sola vez
-    // Intentamos cargar todos los sprites del personaje
+    // Intentamos cargar todos los sprites de objetos
     try
     {
+        // Cargamos el escenario del nivel 1
+        QPixmap fondo(
+            ":/sprites/escenarios/fondo_nivel1.png");
+
+        if (fondo.isNull())
+        {
+            throw std::runtime_error(
+                "No se pudo cargar el escenario del nivel 1");
+        }
+
+        // Incorporamos el fondo a la escena
+        QGraphicsPixmapItem *figuraFondo =
+            escena->addPixmap(fondo);
+
+        // Ubicamos el fondo en el origen
+        figuraFondo->setPos(0, 0);
+
+        // Mantenemos el fondo detras de todos los elementos
+        figuraFondo->setZValue(-100);
         cargarSprites();
         cargarSpritesMuestras();
         cargarSpriteSemilla();

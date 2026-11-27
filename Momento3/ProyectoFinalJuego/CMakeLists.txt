@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
         objetos.qrc
         enemigos.qrc
         guacamaya.qrc
+        escenarios.qrc
+        menu.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
