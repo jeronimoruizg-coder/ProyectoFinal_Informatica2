@@ -51,6 +51,7 @@ qt_add_executable(ProyectoFinalJuego
         vistanivel2.h vistanivel2.cpp
         niebla.h niebla.cpp
         armadillo.h armadillo.cpp
+        mono.h mono.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

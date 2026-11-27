@@ -6,6 +6,8 @@
 #include "bomba.h"
 #include "niebla.h"
 #include "armadillo.h"
+#include "mono.h"
+#include "inteligencia.h"
 #include <vector>
 
 class Nivel2
@@ -19,6 +21,7 @@ private:
     std::vector<Bomba*> bombas;
 
     void actualizarBombas(float intervaloTiempo);
+    void explotarBomba(int indice);
     void eliminarBomba(int indice);
     void eliminarTodasLasBombas();
 
@@ -36,10 +39,15 @@ private:
     // Enemigos
     std::vector<Niebla*> nieblas;
     std::vector<Armadillo*> armadillos;
+    std::vector<Mono*> monos;
+
+    // "Cerebro" que comparten los monos (igual que la guacamaya en el nivel 1)
+    Inteligencia inteligenciaMono;
 
     void crearEnemigos();
     void actualizarNieblas(float intervaloTiempo);
     void actualizarArmadillos(float intervaloTiempo);
+    void actualizarMonos(float intervaloTiempo);
     void eliminarTodosLosEnemigos();
 
     // Revisa si un rectangulo se cruza con Dexter
@@ -66,6 +74,7 @@ public:
     const std::vector<Bomba*> &getBombas() const;
     const std::vector<Niebla*> &getNieblas() const;
     const std::vector<Armadillo*> &getArmadillos() const;
+    const std::vector<Mono*> &getMonos() const;
 
     bool haPerdido() const;
     bool haGanado();

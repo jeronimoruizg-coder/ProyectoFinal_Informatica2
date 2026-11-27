@@ -54,6 +54,10 @@ private:
     std::vector<QGraphicsRectItem*> figurasArmadillos;
     void actualizarArmadillosGraficos();
 
+    // Una figura por cada mono vivo
+    std::vector<QGraphicsRectItem*> figurasMonos;
+    void actualizarMonosGraficos();
+
     // Cuenta los cuadros del juego (para hacer parpadear cosas)
     int contadorCuadros;
 

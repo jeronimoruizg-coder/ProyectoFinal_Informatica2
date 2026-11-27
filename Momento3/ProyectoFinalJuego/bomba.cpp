@@ -17,6 +17,40 @@ Bomba::Bomba(int filaInicial, int columnaInicial)
     explotada = false;
     tiempoExplosion = 0;
     dexterEncima = true;
+
+    // Es una bomba normal de Dexter
+    esSemilla = false;
+    filaOrigen = fila;
+    columnaOrigen = columna;
+    opcionUsada = -1;
+}
+
+// La semilla vuela hasta su casilla y luego espera en el suelo
+// el mismo tiempo que una bomba normal antes de explotar
+Bomba::Bomba(int filaDestino, int columnaDestino, int filaLanzamiento,
+             int columnaLanzamiento, int opcion)
+{
+    fila = filaDestino;
+    columna = columnaDestino;
+
+    ancho = Mapa::TAM_CASILLA;
+    alto = Mapa::TAM_CASILLA;
+    x = columna * Mapa::TAM_CASILLA;
+    y = fila * Mapa::TAM_CASILLA;
+
+    tiempoMecha = DURACION_VUELO + TIEMPO_EN_SUELO;  // lo que dura el vuelo
+    alcance = 1;         // cruz pequena
+
+    explotada = false;
+    tiempoExplosion = 0;
+
+    // Dexter no esta encima y la semilla no bloquea a nadie
+    dexterEncima = false;
+
+    esSemilla = true;
+    filaOrigen = filaLanzamiento;
+    columnaOrigen = columnaLanzamiento;
+    opcionUsada = opcion;
 }
 
 // Funcion heredada de Objetos
@@ -174,7 +208,52 @@ float Bomba::getTiempoMecha() const
 
 bool Bomba::esSolidaParaDexter() const
 {
-    return !explotada && !dexterEncima;
+    return !explotada && !dexterEncima && !esSemilla;
+}
+
+int Bomba::getAlcance() const
+{
+    return alcance;
+}
+
+bool Bomba::esSemillaDelMono() const
+{
+    return esSemilla;
+}
+
+int Bomba::getOpcionUsada() const
+{
+    return opcionUsada;
+}
+
+int Bomba::getFilaOrigen() const
+{
+    return filaOrigen;
+}
+
+int Bomba::getColumnaOrigen() const
+{
+    return columnaOrigen;
+}
+
+// 0 cuando sale del mono, 1 cuando cae en su casilla
+float Bomba::getProgresoVuelo() const
+{
+    if (!esSemilla)
+    {
+        return 1;
+    }
+
+    // Tiempo que lleva desde que la lanzaron
+    float transcurrido = DURACION_VUELO + TIEMPO_EN_SUELO - tiempoMecha;
+    float progreso = transcurrido / DURACION_VUELO;
+
+    // Despues del vuelo ya esta en el suelo
+    if (progreso > 1)
+    {
+        progreso = 1;
+    }
+    return progreso;
 }
 
 bool Bomba::estaDexterEncima() const
