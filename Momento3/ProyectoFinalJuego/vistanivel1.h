@@ -16,6 +16,9 @@
 #include <QGraphicsColorizeEffect>
 #include <QPushButton>
 #include <QGraphicsProxyWidget>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QSoundEffect>
 
 using namespace std;
 
@@ -179,7 +182,7 @@ private:
     // Funciones graficas
     void cargarSpritesExcrementos();
     void actualizarExcrementosGraficos();
-
+//--------------------------------------------------- Pausa ----------------------------------//
     // Estado de pausa
     bool partidaPausada;
 
@@ -192,12 +195,38 @@ private:
 
     // Control de la pausa
     void alternarPausa();
+//--------------------------------------------------- Sonido ----------------------------------//
+    // Musica de fondo
+    QMediaPlayer *musicaFondo;
+    QAudioOutput *salidaAudio;
+
+    // Efectos de sonido
+    QSoundEffect *sonidoRecoleccion;
+    QSoundEffect *sonidoExplosion;
+    QSoundEffect *sonidoDano;
+    QSoundEffect *sonidoBeneficio;
+    QSoundEffect *sonidoVictoria;
+    QSoundEffect *sonidoAlertaJabali;
+
+    // Control de la alerta del jabali
+    bool alertaJabaliAnterior;
+
+    // Funciones de audio
+    void cargarAudios();
+
+    QSoundEffect *cargarEfecto(
+        const QString &ruta, float volumen);
+
+    void actualizarSonidos();
+
 
 public:
-    VistaNivel1(bool dificultad = false);
-signals:
 
+    VistaNivel1(bool dificultad = false);
+
+signals:
     void solicitarMenuPrincipal();
+    void solicitarSiguienteNivel();
 
 protected:
     void keyPressEvent(QKeyEvent *evento);

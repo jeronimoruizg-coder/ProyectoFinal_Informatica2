@@ -41,5 +41,6 @@ private:
     void iniciarNivel1(bool dificultad);
     void iniciarNivel2(bool dificultad);
     void jugar();
+    void avanzarAlNivel2();
 };
 #endif // MAINWINDOW_H

@@ -125,6 +125,8 @@ void MainWindow::mostrarMenuPrincipal()
 
 void MainWindow::iniciarNivel1(bool dificultad)
 {
+    dificultadSeleccionada = dificultad;//Garantizamos que la dificultad seleccionada actue en ambos niveles
+
     VistaNivel1 *vistaNivel1 =
         new VistaNivel1(dificultad);
 
@@ -134,6 +136,15 @@ void MainWindow::iniciarNivel1(bool dificultad)
             this,
             &MainWindow::mostrarMenuPrincipal,
             Qt::QueuedConnection);
+
+
+    // Conectamos la solicitud de avanzar al nivel 2
+    connect(vistaNivel1,
+            &VistaNivel1::solicitarSiguienteNivel,
+            this,
+            &MainWindow::avanzarAlNivel2,
+            Qt::QueuedConnection);
+
 
     // Mostramos el nivel
     setCentralWidget(vistaNivel1);
@@ -228,4 +239,9 @@ void MainWindow::cambiarDificultad()
     {
         textoDificultad->setText("Normal");
     }
+}
+//------------------------------ Avanzar el nivel 2 despues de ganar ----------------------//
+void MainWindow::avanzarAlNivel2()
+{
+    iniciarNivel2(dificultadSeleccionada);
 }
