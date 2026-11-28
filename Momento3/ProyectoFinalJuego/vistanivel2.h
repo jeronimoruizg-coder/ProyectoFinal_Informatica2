@@ -11,6 +11,10 @@
 #include <QGraphicsEllipseItem>
 #include <QPushButton>
 #include <QGraphicsProxyWidget>
+#include <QGraphicsPixmapItem>
+#include <QPixmap>
+#include <QMessageBox>
+#include <stdexcept>
 #include <vector>
 #include "nivel2.h"
 
@@ -33,8 +37,18 @@ private:
     QColor colorCasilla(int tipo);
 
     //--------------------------------------------------- Dexter -----------------------------------//
-    QGraphicsRectItem *figuraDexter;
+    QGraphicsPixmapItem *figuraDexter;
     void actualizarDexter();
+
+    // Animacion de caminar en cada direccion (6 fotogramas cada una)
+    std::vector<QPixmap> caminataArriba;
+    std::vector<QPixmap> caminataAbajo;
+    std::vector<QPixmap> caminataIzquierda;
+    std::vector<QPixmap> caminataDerecha;
+    bool spritesCargados;
+
+    void cargarAnimacion(std::vector<QPixmap> &sprites, QString prefijo, int cantidad);
+    void cargarSpritesDexter();
 
     // Contador de vidas
     QGraphicsTextItem *textoVidas;

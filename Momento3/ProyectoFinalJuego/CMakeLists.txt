@@ -24,6 +24,7 @@ set(PROJECT_SOURCES
         escenarios.qrc
         menu.qrc
         audios.qrc
+        nivel2.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -53,6 +54,7 @@ qt_add_executable(ProyectoFinalJuego
         armadillo.h armadillo.cpp
         mono.h mono.cpp
         disparoveneno.h disparoveneno.cpp
+        nivel2.qrc
 
     )
 # Define target properties for Android with Qt 6 as:

@@ -23,6 +23,7 @@ Mono::Mono(int filaInicial, int columnaInicial)
 
     tiempoRecarga = 1.0;
     estrategia = 0;
+    opcionLanzamiento = 0;
     lanzamientoPendiente = false;
     filaObjetivo = 0;
     columnaObjetivo = 0;
@@ -72,7 +73,11 @@ void Mono::actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba
         }
         else if (distancia > 4 || (filaDexter != fila && columnaDexter != columna))
         {
-            moverAVecino(mapa, bombas, filaDexter, columnaDexter, ACERCARSE);
+            // Si puede, rompe paredes hacia Dexter; si no, camina hacia el
+            if (!intentarAbrirCamino(mapa, bombas, filaDexter, columnaDexter))
+            {
+                moverAVecino(mapa, bombas, filaDexter, columnaDexter, ACERCARSE);
+            }
         }
         // Esta alineado pero no puede lanzar (recargando o sin donde caer):
         // se mueve para buscar otra posicion en vez de quedarse quieto
@@ -81,10 +86,13 @@ void Mono::actualizar(float intervaloTiempo, Mapa &mapa, const std::vector<Bomba
             moverAVecino(mapa, bombas, filaDexter, columnaDexter, PASEAR);
         }
     }
-    // 3. Si no pasa nada, pasea
+    // 3. Si Dexter esta lejos, se abre camino con sus semillas o pasea
     else
     {
-        moverAVecino(mapa, bombas, filaDexter, columnaDexter, PASEAR);
+        if (!intentarAbrirCamino(mapa, bombas, filaDexter, columnaDexter))
+        {
+            moverAVecino(mapa, bombas, filaDexter, columnaDexter, PASEAR);
+        }
     }
 
     distanciaAnteriorDexter = distancia;
@@ -239,6 +247,7 @@ bool Mono::intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
             lanzamientoPendiente = true;
             filaObjetivo = filaCae;
             columnaObjetivo = columnaCae;
+            opcionLanzamiento = estrategia;
             tiempoRecarga = 2.5;
             return true;
         }
@@ -246,6 +255,77 @@ bool Mono::intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
 
     // No encontro donde lanzar
     return false;
+}
+
+// Lanza una semilla junto a paredes rompibles para abrirse camino.
+// Escoge, entre las casillas libres a donde puede lanzar (2 a 4 en linea recta),
+// la que tenga paredes rompibles al lado y quede mas cerca de Dexter
+bool Mono::intentarAbrirCamino(Mapa &mapa, const std::vector<Bomba*> &bombas,
+                               int filaDexter, int columnaDexter)
+{
+    if (tiempoRecarga > 0 || tieneSemillaActiva(bombas))
+    {
+        return false;
+    }
+
+    int cambioFila[4] = {-1, 1, 0, 0};
+    int cambioColumna[4] = {0, 0, -1, 1};
+
+    bool encontro = false;
+    int mejorFila = 0;
+    int mejorColumna = 0;
+    int mejorDistancia = 1000;
+
+    for (int d = 0; d < 4; d++)
+    {
+        for (int salto = 2; salto <= 4; salto++)
+        {
+            int f = fila + cambioFila[d] * salto;
+            int c = columna + cambioColumna[d] * salto;
+
+            if (!estaLibre(mapa, bombas, f, c))
+            {
+                continue;
+            }
+
+            // Cuenta las paredes rompibles que romperia la cruz de la semilla
+            int rompibles = 0;
+            for (int k = 0; k < 4; k++)
+            {
+                if (mapa.getCasilla(f + cambioFila[k], c + cambioColumna[k]) == Mapa::PARED_ROMPIBLE)
+                {
+                    rompibles++;
+                }
+            }
+
+            if (rompibles == 0)
+            {
+                continue;
+            }
+
+            // De las que sirven, la mas cercana a Dexter
+            int distanciaDexter = abs(filaDexter - f) + abs(columnaDexter - c);
+            if (distanciaDexter < mejorDistancia)
+            {
+                encontro = true;
+                mejorDistancia = distanciaDexter;
+                mejorFila = f;
+                mejorColumna = c;
+            }
+        }
+    }
+
+    if (!encontro)
+    {
+        return false;
+    }
+
+    lanzamientoPendiente = true;
+    filaObjetivo = mejorFila;
+    columnaObjetivo = mejorColumna;
+    opcionLanzamiento = -1;   // no es un ataque: la inteligencia no aprende de este
+    tiempoRecarga = 2.5;
+    return true;
 }
 
 // Revisa si su semilla sigue en el mapa (volando, en el suelo o explotando)
@@ -405,6 +485,11 @@ void Mono::setEstrategia(int nuevaEstrategia)
 int Mono::getEstrategia() const
 {
     return estrategia;
+}
+
+int Mono::getOpcionLanzamiento() const
+{
+    return opcionLanzamiento;
 }
 
 int Mono::getFila() const

@@ -177,7 +177,9 @@ void Nivel2::explotarBomba(int indice)
     Bomba *bomba = bombas[indice];
     bomba->explotar(mapa);
 
-    if (bomba->esSemillaDelMono())
+    // (las semillas para abrir camino tienen opcion -1 y no cuentan)
+    if (bomba->esSemillaDelMono() && bomba->getOpcionUsada() >= 0)
+
     {
         bool acerto = bomba->hayFuegoEn(getFilaDexter(), getColumnaDexter());
         inteligenciaMono.registrarResultado(bomba->getOpcionUsada(), acerto);
@@ -395,7 +397,7 @@ void Nivel2::actualizarMonos(float intervaloTiempo)
         {
             bombas.push_back(new Bomba(mono->getFilaObjetivo(), mono->getColumnaObjetivo(),
                                        mono->getFila(), mono->getColumna(),
-                                       mono->getEstrategia()));
+                                       mono->getOpcionLanzamiento()));
             mono->confirmarLanzamiento();
 
             // Para el proximo ataque la inteligencia vuelve a escoger

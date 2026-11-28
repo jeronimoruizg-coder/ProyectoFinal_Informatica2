@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>sprites/nivel2/dexter/caminata_abajo_00.png</file>
+        <file>sprites/nivel2/dexter/caminata_abajo_01.png</file>
+        <file>sprites/nivel2/dexter/caminata_abajo_02.png</file>
+        <file>sprites/nivel2/dexter/caminata_abajo_03.png</file>
+        <file>sprites/nivel2/dexter/caminata_abajo_04.png</file>
+        <file>sprites/nivel2/dexter/caminata_abajo_05.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_00.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_01.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_02.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_03.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_04.png</file>
+        <file>sprites/nivel2/dexter/caminata_arriba_05.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_00.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_01.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_02.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_03.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_04.png</file>
+        <file>sprites/nivel2/dexter/caminata_izquierda_05.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_00.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_01.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_02.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_03.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_04.png</file>
+        <file>sprites/nivel2/dexter/caminata_derecha_05.png</file>
+    </qresource>
+</RCC>

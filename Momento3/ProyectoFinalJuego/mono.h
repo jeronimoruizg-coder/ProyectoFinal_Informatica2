@@ -28,6 +28,9 @@ private:
     // Estrategia de ataque actual (la escoge la Inteligencia)
     int estrategia;
 
+    // estrategia del ultimo lanzamiento (-1 = abrir camino)
+    int opcionLanzamiento;
+
     // Lanzamiento pendiente: el nivel crea la semilla
     bool lanzamientoPendiente;
     int filaObjetivo, columnaObjetivo;
@@ -42,6 +45,8 @@ private:
 
     // ---- Razonar y actuar ----
     bool tieneSemillaActiva(const std::vector<Bomba*> &bombas);
+    bool intentarAbrirCamino(Mapa &mapa, const std::vector<Bomba*> &bombas,
+                             int filaDexter, int columnaDexter);
     bool intentarLanzar(Mapa &mapa, const std::vector<Bomba*> &bombas,
                         int filaDexter, int columnaDexter, int distancia);
     void moverAVecino(Mapa &mapa, const std::vector<Bomba*> &bombas,
@@ -68,6 +73,8 @@ public:
 
     void setEstrategia(int nuevaEstrategia);
     int getEstrategia() const;
+
+    int getOpcionLanzamiento() const;
 
     int getFila() const;
     int getColumna() const;

@@ -21,11 +21,22 @@ VistaNivel2::VistaNivel2(bool dificultad): nivel(dificultad)
 
     crearMapa();
 
-    // Por ahora Dexter es un cuadro azul
-    Dexter &dexter = nivel.getDexter();
-    figuraDexter = escena->addRect(0, 0, dexter.getAncho(), dexter.getAlto(),
-                                   QPen(Qt::black), QBrush(QColor(40, 110, 220)));
+    // Dexter ahora es una imagen; empieza vacia hasta cargar los sprites
+    figuraDexter = escena->addPixmap(QPixmap());
     figuraDexter->setZValue(10);
+
+    // Igual que en el nivel 1: si falta una imagen avisamos cual es
+    spritesCargados = false;
+    try
+    {
+        cargarSpritesDexter();
+        spritesCargados = true;
+    }
+    catch (const std::runtime_error &error)
+    {
+        QMessageBox::critical(this, "Error de recursos", error.what());
+    }
+
     actualizarDexter();
 
     // Contador de vidas
@@ -159,17 +170,47 @@ void VistaNivel2::actualizarDexter()
 {
     Dexter &dexter = nivel.getDexter();
 
-    figuraDexter->setPos(MARGEN_X + dexter.getX(), MARGEN_Y + dexter.getY());
+    // Si no se pudieron cargar las imagenes no hay nada que dibujar
+    if (!spritesCargados)
+    {
+        return;
+    }
 
-    // Parpadea en rojo mientras es invulnerable
-    if (dexter.debeTitilarRojo())
+    // Escogemos la animacion segun hacia donde mira Dexter
+    const std::vector<QPixmap> *animacion = &caminataAbajo;
+    if (dexter.getMirandoY() < 0)
     {
-        figuraDexter->setBrush(QBrush(QColor(220, 40, 40)));
+        animacion = &caminataArriba;
     }
-    else
+    else if (dexter.getMirandoX() < 0)
     {
-        figuraDexter->setBrush(QBrush(QColor(40, 110, 220)));
+        animacion = &caminataIzquierda;
     }
+    else if (dexter.getMirandoX() > 0)
+    {
+        animacion = &caminataDerecha;
+    }
+
+    // Si camina cambia de fotograma cada 6 cuadros (unos 0.1 s);
+    // si esta quieto se queda en el primero
+    bool seMueve = arribaPresionada || abajoPresionada ||
+                   izquierdaPresionada || derechaPresionada;
+
+    int fotograma = 0;
+    if (seMueve)
+    {
+        fotograma = (contadorCuadros / 6) % animacion->size();
+    }
+    figuraDexter->setPixmap((*animacion)[fotograma]);
+
+    // La imagen mide 80x80 pero Dexter ocupa el centro.
+    // La centramos sobre el cuerpo fisico de Dexter (36x36)
+    float centroX = dexter.getX() + dexter.getAncho() / 2;
+    float centroY = dexter.getY() + dexter.getAlto() / 2;
+    figuraDexter->setPos(MARGEN_X + centroX - 41, MARGEN_Y + centroY - 45);
+
+    // Mientras es invulnerable parpadea (aparece y desaparece)
+    figuraDexter->setVisible(!dexter.debeTitilarRojo());
 }
 
 void VistaNivel2::actualizarContadorVidas()
@@ -676,4 +717,31 @@ void VistaNivel2::actualizarTextoPoderes()
     {
         textoPoderes->setPlainText(nuevoTexto);
     }
+}
+
+//--------------------------------------------------- Sprites ----------------------------------//
+
+// Carga los fotogramas prefijo_00.png, prefijo_01.png... en el vector
+void VistaNivel2::cargarAnimacion(std::vector<QPixmap> &sprites, QString prefijo, int cantidad)
+{
+    for (int i = 0; i < cantidad; i++)
+    {
+        // Numero con dos digitos: 0 -> "00", 1 -> "01"...
+        QString nombre = prefijo + "_" + QString::number(i).rightJustified(2, '0') + ".png";
+
+        QPixmap imagen(nombre);
+        if (imagen.isNull())
+        {
+            throw std::runtime_error(("No se pudo cargar: " + nombre).toStdString());
+        }
+        sprites.push_back(imagen);
+    }
+}
+
+void VistaNivel2::cargarSpritesDexter()
+{
+    cargarAnimacion(caminataArriba, ":/sprites/nivel2/dexter/caminata_arriba", 6);
+    cargarAnimacion(caminataAbajo, ":/sprites/nivel2/dexter/caminata_abajo", 6);
+    cargarAnimacion(caminataIzquierda, ":/sprites/nivel2/dexter/caminata_izquierda", 6);
+    cargarAnimacion(caminataDerecha, ":/sprites/nivel2/dexter/caminata_derecha", 6);
 }
